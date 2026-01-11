@@ -5,7 +5,7 @@ import utils as u
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Manas Mind Palace", layout="wide")
-BRAIN_DIR = "BRAIN"
+BRAIN_DIR = "palace"
 
 # --- SIDEBAR ---
 st.sidebar.title("🧠 Palace Rooms")

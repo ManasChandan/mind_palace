@@ -1,0 +1,3 @@
+# Manas Mind Palace
+
+Hi This is my mind Palace. Stay tuned for upcoming updates ......
