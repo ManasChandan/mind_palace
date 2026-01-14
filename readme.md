@@ -1,3 +1,3 @@
 # Manas Mind Palace
 
-Hi This is my mind Palace. Stay tuned for upcoming updates ......
+PySpark Inspiration - [Ease With Data](https://www.youtube.com/@easewithdata)
