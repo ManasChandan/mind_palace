@@ -1,6 +1,14 @@
-# PySpark 3 - Nulls and Aggregations
+# Nulls and Aggregations
 
 ---
+
+## Table of Contents
+1. [Lazy Evaluation](#lazy-eval)
+2. [Refinement: Strings, Dates, and the "Dreaded" Null](#string-date-null)
+3. [Analytical Power: Aggregations and Window Functions](#agg-window)
+4. [Architecture: Joins, Unions, and Performance](#join-union-perf)
+
+<div id="lazy-eval"></div>
 
 ## 1. The Foundation: SparkSession and Lazy Evaluation (Repetation, since highly IMP)
 
@@ -9,6 +17,7 @@ Every journey begins with the **SparkSession**, the mandatory entry point for an
 A core concept to grasp is **Lazy Evaluation**. Think of Spark like a **Chef in a Restaurant**. The **Transformations** (like `filter` or `select`) are the recipes—they describe how to prepare a dish, but no cooking happens yet. The **Action** (like `.show()`, `.count()`, or `.write()`) is when the customer places an order; only then does the chef follow the recipe to produce the final meal.
 
 ---
+<div id="string-date-null"></div>
 
 ## 2. Refinement: Strings, Dates, and the "Dreaded" Null
 
@@ -31,6 +40,7 @@ df_clean = df.withColumn("gender", coalesce(df.new_gender, lit("O"))) \
 ```
 
 ---
+<div id="agg-window"></div>
 
 ## 3. Analytical Power: Aggregations and Window Functions
 
@@ -55,6 +65,7 @@ df_ranked = df.withColumn("rn", row_number().over(w_spec)).where("rn == 2")
 ```
 
 ---
+<div id="join-union-perf"></div>
 
 ## 4. Architecture: Joins, Unions, and Performance
 

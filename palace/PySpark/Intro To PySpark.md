@@ -1,15 +1,17 @@
-# PySpark 1
+# Introduction to PySpark
 
 This document summarizes the key concepts of PySpark. 
 Reference - Ease With Data Youtube Pyspark Playlist. 
 
 ## Table of Contents
-1. [Introduction to Spark](#1-introduction-to-spark)
-2. [Spark Architecture: Under the Hood](#2-spark-architecture-under-the-hood)
-3. [Transformations, Actions, and Lazy Evaluation](#3-transformations-actions-and-lazy-evaluation)
-4. [DataFrames and Execution Plans](#4-dataframes-and-execution-plans)
+1. [Introduction to Spark](#intro-spark)
+2. [Spark Architecture: Under the Hood](#spark-architecture-under-the-hood)
+3. [Transformations, Actions, and Lazy Evaluation](#transformations-actions-and-lazy-evaluation)
+4. [DataFrames and Execution Plans](#dataframes-and-execution-plans)
 
 ---
+
+<div id="intro-spark"></div>
 
 ## 1. Introduction to Spark
 
@@ -27,6 +29,8 @@ Spark is structured in layers:
 
 ---
 
+<div id="spark-architecture-under-the-hood"></div>
+
 ## 2. Spark Architecture: Under the Hood
 
 To understand distributed computing, Spark uses a Master-Slave architecture, visualized through a "Marble Counting" analogy where an instructor (Driver) asks groups (Executors) to count marbles.
@@ -42,6 +46,8 @@ To understand distributed computing, Spark uses a Master-Slave architecture, vis
 *   **Stage:** A job is divided into stages based on **Shuffles**. A shuffle acts as a boundary; a new stage cannot begin until the data movement (shuffle) is complete.
 
 ---
+
+<div id="transformations-actions-and-lazy-evaluation"></div>
 
 ## 3. Transformations, Actions, and Lazy Evaluation
 
@@ -88,6 +94,8 @@ Spark waits until the last possible moment (when an Action is called) to execute
 *   *Benefit:* This allows Spark to optimize the plan and manage resources efficiently.
 
 ---
+
+<div id="dataframes-and-execution-plans"></div>
 
 ## 4. DataFrames and Execution Plans
 

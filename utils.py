@@ -65,12 +65,10 @@ def render_markdown_file():
 
             st.caption(f"Location: {file_path.replace(os.sep, r' > ')}")
 
-            st.title(os.path.basename(file_path).replace(".md", ""))
-
             st.divider()
 
             # Render the content
-            st.markdown(md_content)
+            st.markdown(md_content, unsafe_allow_html=True)
 
         else:
             st.error(f"File not found or not a markdown file: {file_path}")

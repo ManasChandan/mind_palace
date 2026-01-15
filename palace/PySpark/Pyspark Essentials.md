@@ -1,6 +1,15 @@
 # The PySpark Essentials
 
+## Table of Contents
+1. [Initialising the SparkSession](#spark-session)
+2. [Creating DataFrames and Lazy Evaluation](#data-and-lazy-eval)
+3. [Designing and Managing Schema](#schema-definition)
+4. [Basic Structured Transformations](#basic-structured-transformations)
+5. [Advanced Column Operations](#advanced-col-operations)
+
 ---
+
+<div id="spark-session"></div>
 
 ## 1. Initialising the SparkSession
 The **SparkSession** is the primary driver process and the mandatory **entry point** for any Spark application. To create one, you use the `SparkSession.builder` method from the `pyspark.sql` module.
@@ -20,6 +29,7 @@ spark = SparkSession.builder \
 ```
 
 ---
+<div id="data-and-lazy-eval"></div>
 
 ## 2. Creating DataFrames and Lazy Evaluation
 To create your first DataFrame, you can use the **`spark.createDataFrame()`** method, passing in your raw data (often a list of lists) and a schema. 
@@ -30,6 +40,7 @@ A core concept to grasp is **Lazy Evaluation**. PySpark does not execute transfo
 *   **`.count()`**: Returns the number of rows.
 
 ---
+<div id="schema-definition"></div>
 
 ## 3. Defining and Managing Schemas
 Spark internally stores schemas using **`StructType`** and **`StructField`**. Each field defines the column name, data type (e.g., `StringType`, `IntegerType`), and whether it is **nullable**.
@@ -45,6 +56,7 @@ While you can manually define these types, Spark also allows the use of **schema
 ```
 
 ---
+<div id="basic-structured-transformations"></div>
 
 ## 4. Basic Structured Transformations
 To manipulate data, PySpark provides several methods to select and modify columns:
@@ -64,6 +76,8 @@ df_final = df.selectExpr(
 ```
 
 ---
+
+<div id="advanced-col-operations"></div>
 
 ## 5. Advanced Column Operations
 For more complex data engineering tasks, you will frequently use the following APIs:
