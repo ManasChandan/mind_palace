@@ -1,7 +1,7 @@
 # 📝 TODO
 
 ### 🚀 Task List
-- [] Add B+ trees description and usgae to system design file
+- [] Add B+ trees description and usgae to system design file and a table of contents
 
 ### 🚀 Completed List
 
