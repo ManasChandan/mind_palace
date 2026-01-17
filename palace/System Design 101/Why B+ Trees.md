@@ -2,21 +2,48 @@
 
 Ever wondered why almost every major database from relational SQL systems to NoSQL giants like MongoDB—chooses the **B+ tree** as its core storage structure? While it might seem like a complex academic concept, the evolution of database storage reveals that B+ trees are a practical solution to the physical limitations of disk-based storage.
 
+---
+
+<div id="table-of-contents">
+<h3>Table of Contents</h3>
+<ul>
+<li><a href="#naive-starting-point">The Naive Starting Point: Sequential Files</a></li>
+<li><a href="#b-plus-tree-solution">The B+ Tree Solution: Optimising for the Disk</a>
+<ul>
+<li><a href="#implementation">B+ Trees Implementation</a></li>
+<li><a href="#matching-disk-block">Matching the Disk Block Size</a></li>
+<li><a href="#power-of-nodes">The Power of "Leaf" and "Internal" Nodes</a></li>
+</ul>
+</li>
+<li><a href="#logarithmic-operations">How Operations Become "Logarithmic"</a></li>
+<li><a href="#pseudocode-file-ops">Pseudocode of Actual File Operations</a></li>
+<li><a href="#final-thoughts">Final Thoughts</a></li>
+</ul>
+</div>
+
+---
+
+<div id="naive-starting-point"></div>
+
 ### The Naive Starting Point: Sequential Files
 
 To understand the genius of the B+ tree, we first have to look at the simplest way to store data: a single file where rows or documents are written one after another. While this "naive" implementation is easy to build, it quickly becomes a performance nightmare as your data grows:
 
-*   **Insertions (Order N):** You cannot simply "insert" a line into the middle of a file on a disk. To maintain a specific order (like a primary key), you would have to create a brand-new file, copy everything before the insertion point, add the new row, and then copy everything after it.
-*   **Updates:** If a row's width increases (e.g., updating 100 bytes of data to 120 bytes), you risk overwriting the next row’s data. Again, this often forces a full file rewrite.
-*   **Searches and Deletions:** Finding a single row requires a **linear scan** (checking every row from the start), and deleting a row involves rewriting the entire file just to reclaim the empty space.
+* **Insertions (Order N):** You cannot simply "insert" a line into the middle of a file on a disk. To maintain a specific order (like a primary key), you would have to create a brand-new file, copy everything before the insertion point, add the new row, and then copy everything after it.
+* **Updates:** If a row's width increases (e.g., updating 100 bytes of data to 120 bytes), you risk overwriting the next row’s data. Again, this often forces a full file rewrite.
+* **Searches and Deletions:** Finding a single row requires a **linear scan** (checking every row from the start), and deleting a row involves rewriting the entire file just to reclaim the empty space.
 
 In this naive world, almost every operation is **Order N**, meaning the database gets slower and slower as more data is added.
+
+<div id="b-plus-tree-solution"></div>
 
 ### The B+ Tree Solution: Optimising for the Disk
 
 The B+ tree solves these issues by breaking data into **nodes** that correspond to the way hardware actually works.
 
 It stores all actual data records in linked leaf nodes, while internal nodes act as indexes with only keys for navigation.
+
+<div id="implementation"></div>
 
 #### 0. B+ Trees Implementation
 
@@ -26,10 +53,10 @@ When a leaf node exceeds its capacity, it must split. In a B+ Tree, the leaf nod
 
 The Logic:
 
-- Find the middle: Cut the overcrowded leaf in half.
-- Create a sibling: Move the right half of the data into a brand-new leaf node.
-- Link them: Point the old leaf’s next pointer to the new leaf (creating the linked list).
-- Promote (Copy): Take the first key of the new right-hand leaf and send a copy of it to the parent.
+* Find the middle: Cut the overcrowded leaf in half.
+* Create a sibling: Move the right half of the data into a brand-new leaf node.
+* Link them: Point the old leaf’s next pointer to the new leaf (creating the linked list).
+* Promote (Copy): Take the first key of the new right-hand leaf and send a copy of it to the parent.
 
 <B>The Internal Split (Roadmap Level)</B>
 
@@ -37,10 +64,10 @@ If the parent node becomes too full because of the promotions, it also has to sp
 
 The Logic:
 
-- Find the middle: Identify the middle key.
-- Create a sibling: Move everything to the right of the middle key into a new internal node.
-- Promote (Move): The middle key itself is moved up to the grandparent. It does not stay behind (unlike the leaf split).
-- Re-parent: All the children that were moved to the new node must now point to that new node as their "father."
+* Find the middle: Identify the middle key.
+* Create a sibling: Move everything to the right of the middle key into a new internal node.
+* Promote (Move): The middle key itself is moved up to the grandparent. It does not stay behind (unlike the leaf split).
+* Re-parent: All the children that were moved to the new node must now point to that new node as their "father."
 
 ```
 FUNCTION Insert(key, value):
@@ -82,19 +109,29 @@ FUNCTION SplitInternal(Node):
     5. InsertIntoParent(Node, MiddleKey, NewNode)
 ```
 
+<div id="matching-disk-block"></div>
+
 #### 1. Matching the Disk Block Size
+
 Most operating systems perform disk I/O in **4KB blocks**. Even if you only want to read one byte, the system reads the entire 4KB block. B+ trees leverage this by making each tree node 4KB in size. If an average row is 40 bytes, one node can hold roughly 100 rows, allowing the database to fetch 100 rows in a single disk read.
 
+<div id="power-of-nodes"></div>
+
 #### 2. The Power of "Leaf" and "Internal" Nodes
+
 Unlike a standard B-tree, a B+ tree forces all actual table data (rows/documents) into the **leaf nodes** at the bottom of the tree. The nodes above them—**internal or non-leaf nodes**—act as "routing information." They store ranges (e.g., "IDs 1 to 200 go left, IDs 201 to 400 go right") to guide the database to the correct disk offset.
+
+<div id="logarithmic-operations"></div>
 
 ### How Operations Become "Logarithmic"
 
 By using this tree structure, the database can perform operations with incredible efficiency:
 
-*   **Finding a Row:** To find ID #3, the database reads the root node, follows the pointer to the correct child node, and finally reads the leaf node. Instead of scanning millions of rows, it performs just **three or four discrete disk reads** to find any specific piece of data.
-*   **Insertions and Updates:** Because data is stored in discrete blocks, the database only needs to find the specific 4KB node, update it in memory, and flush that single block back to disk. There is no need to rewrite the entire database file.
-*   **Range Queries:** This is where the B+ tree truly shines. All leaf nodes are **linearly connected** (linked together). If you want all IDs from 100 to 600, the database finds ID 100 and then simply "walks" across the leaves until it hits 600. This makes range queries super-efficient and predictable.
+* **Finding a Row:** To find ID #3, the database reads the root node, follows the pointer to the correct child node, and finally reads the leaf node. Instead of scanning millions of rows, it performs just **three or four discrete disk reads** to find any specific piece of data.
+* **Insertions and Updates:** Because data is stored in discrete blocks, the database only needs to find the specific 4KB node, update it in memory, and flush that single block back to disk. There is no need to rewrite the entire database file.
+* **Range Queries:** This is where the B+ tree truly shines. All leaf nodes are **linearly connected** (linked together). If you want all IDs from 100 to 600, the database finds ID 100 and then simply "walks" across the leaves until it hits 600. This makes range queries super-efficient and predictable.
+
+<div id="pseudocode-file-ops"></div>
 
 ### Pseudocode of Actual File Operations (Thanks Google Gemini)
 
@@ -151,12 +188,12 @@ FUNCTION SplitFileNode(OldPageID, OldPageData):
     7. Update Metadata (TotalPages += 1)
 ```
 
+<div id="final-thoughts"></div>
+
 ![BEST PHOTO EXPLAINING B+ TREES AND DATA](https://media.geeksforgeeks.org/wp-content/uploads/20230623132658/ezgifcom-gif-maker-(14)-768.webp)
 
 ### Final Thoughts
 
 The B+ tree is the backbone of modern data storage because it respects the constraints of physical disks while providing **predictable, high-speed performance**. Whether it is MySQL's InnoDB or MongoDB's WiredTiger engine, the B+ tree ensures that your "Find One" or "Range Query" stays fast, no matter how large your dataset becomes.
-
-***
 
 *Note: This summary is based on the insights shared by Arpit Bhayani's Youtube Channel* ([Arpits Youtube Channel](https://www.youtube.com/@AsliEngineering))
