@@ -4,6 +4,7 @@
 
 - [ ] Add Delta Lake and its details. 
 - [ ] Do a small Delta Lake vs MySQL. 
+- [ ] Relate a bit to geo-spatial data. 
 
 ### 🚀 Completed List
 
