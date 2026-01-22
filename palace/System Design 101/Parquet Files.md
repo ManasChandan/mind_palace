@@ -1,4 +1,22 @@
+## 📑 Table of Contents
+
+* <a href="#core-philosophy">Core Philosophy: Row vs. Columnar</a>
+* <a href="#physical-layout">The Physical Layout on Disk</a>
+* <a href="#why-parquet-fast">Why Parquet is Faster (The Superpowers)</a>
+* <a href="#performance-comparison">Performance Comparison (10M+ Rows)</a>
+* <a href="#important-considerations">Important Considerations (The "Fine Print")</a>
+* <a href="#ecosystem-tools">Common Ecosystem Tools</a>
+* <a href="#hybrid-architecture">The "Hybrid" Architecture (Row Groups + Columns)</a>
+* <a href="#schema-evolution">Schema Evolution: Handling Change</a>
+* <a href="#critical-limitations">Critical Limitations & "Breaking Changes"</a>
+
+---
+
+<div id="parquet-guide"></div>
+
 # 📦 Apache Parquet: The Definitive Guide
+
+<div id="core-philosophy"></div>
 
 ## 1. Core Philosophy: Row vs. Columnar
 
@@ -8,6 +26,8 @@ Most traditional formats (like CSV) are **Row-oriented**. Parquet is **Column-or
 * **Column-Oriented (Parquet):** Data is stored as `Column1, Column2, Column3`. The computer can jump directly to the specific column it needs, ignoring the rest.
 
 ---
+
+<div id="physical-layout"></div>
 
 ## 2. The Physical Layout on Disk
 
@@ -29,6 +49,8 @@ Parquet writes the metadata at the **end** of the file. This allows the writer t
 
 ---
 
+<div id="why-parquet-fast"></div>
+
 ## 3. Why Parquet is Faster (The Superpowers)
 
 ### A. Column Pruning (I/O Efficiency)
@@ -49,16 +71,20 @@ Because the **Footer** knows the Min/Max of every block, it can skip entire chun
 
 ---
 
+<div id="performance-comparison"></div>
+
 ## 4. Performance Comparison (10M+ Rows)
 
-| Feature | CSV | Parquet |
-| --- | --- | --- |
-| **Storage** | Large (Text-based) | Small (Compressed Binary) |
-| **Read Speed** | Slow (Full Scan) | Fast (Selective Scan) |
+| Feature        | CSV                      | Parquet                         |
+| -------------- | ------------------------ | ------------------------------- |
+| **Storage**    | Large (Text-based)       | Small (Compressed Binary)       |
+| **Read Speed** | Slow (Full Scan)         | Fast (Selective Scan)           |
 | **Data Types** | Everything is a "String" | Native Types (Int, Float, Date) |
-| **Schema** | No Schema | Schema is built-in |
+| **Schema**     | No Schema                | Schema is built-in              |
 
 ---
+
+<div id="important-considerations"></div>
 
 ## 5. Important Considerations (The "Fine Print")
 
@@ -70,6 +96,8 @@ While Parquet is amazing, keep these "Golden Rules" in mind:
 
 ---
 
+<div id="ecosystem-tools"></div>
+
 ## 6. Common Ecosystem Tools
 
 * **Processing:** Apache Spark (native format), Pandas (via `pyarrow` or `fastparquet`), Dask.
@@ -78,26 +106,37 @@ While Parquet is amazing, keep these "Golden Rules" in mind:
 
 ---
 
+<div id="hybrid-architecture"></div>
+
 ## 7. The "Hybrid" Architecture (Row Groups + Columns)
+
 Parquet is technically a **Hybrid** format. It uses Row Groups to make Big Data manageable.
 
 ### How it works:
+
 1. **Vertical Slicing:** The file is split into **Row Groups** (e.g., 1 million rows each). This allows for parallel processing (multiple computers/cores working on different groups).
 2. **Horizontal Storage:** Inside each Row Group, data is stored **Columnar**. All 'Salary' values for that group are written back-to-back.
 
 ### The Footer's Role in Multi-Group Files:
-The Footer contains a metadata block for **every** Row Group. If you have 4 Row Groups, the Footer stores 4 distinct byte offsets for the 'Salary' column. 
+
+The Footer contains a metadata block for **every** Row Group. If you have 4 Row Groups, the Footer stores 4 distinct byte offsets for the 'Salary' column.
 
 **Query Execution Example (`AVG(Salary)`):**
+
 1. **Look at Footer:** Get the 4 "GPS coordinates" (byte offsets) for the Salary column.
 2. **Direct Jump:** The disk jumps to those 4 spots, skipping all other columns (ID, Name, etc.).
 3. **Parallel Read:** The system reads all 4 Salary chunks at once.
 4. **Aggregate:** The partial results are merged into the final average.
 
 **Why this wins:**
-- **Parallelism:** You can process different row groups on different CPU cores.
-- **Memory Efficiency:** You only need to load one row group's column into RAM at a time.
-- **Sequential I/O:** Reading values that are physically next to each other on disk is much faster than skipping around text in a CSV.
+
+* **Parallelism:** You can process different row groups on different CPU cores.
+* **Memory Efficiency:** You only need to load one row group's column into RAM at a time.
+* **Sequential I/O:** Reading values that are physically next to each other on disk is much faster than skipping around text in a CSV.
+
+---
+
+<div id="schema-evolution"></div>
 
 ## 8. Schema Evolution: Handling Change
 
@@ -111,6 +150,8 @@ Parquet is "self-describing," meaning each file contains its own schema. This al
 
 ---
 
+<div id="critical-limitations"></div>
+
 ## 9. Critical Limitations & "Breaking Changes"
 
 While Parquet is flexible, it is not a relational database. There are things it cannot do easily:
@@ -119,5 +160,3 @@ While Parquet is flexible, it is not a relational database. There are things it 
 * **No Renaming:** If you rename a column from `Salary` to `Pay`, Parquet treats this as deleting the old column and adding a new one. All historical data under the name `Salary` will appear as `NULL`.
 * **No Type Changes:** Changing a column from an **Integer** to a **String** is a breaking change. Because the binary encoding is different, the reader will fail to parse the old data.
 * **Small File Problem:** Parquet is designed for large files. If you have thousands of tiny Parquet files (a few KB each), the overhead of reading all those Footers will actually make your queries **slower** than a single CSV.
-
----

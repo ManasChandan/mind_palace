@@ -18,6 +18,9 @@ Ever wondered why almost every major database from relational SQL systems to NoS
 <li><a href="#logarithmic-operations">How Operations Become "Logarithmic"</a></li>
 <li><a href="#pseudocode-file-ops">Pseudocode of Actual File Operations</a></li>
 <li><a href="#final-thoughts">Final Thoughts</a></li>
+<li><a href="#secondary-index-and-all-file-lookup">Secondary Indexes and All File Lookups</a></li>
+<li><a href="#how-delete-works">How Row Deletion Works</a></li>
+<li><a href="#how-col-data-type-change">How Column Data Type Change Works</a></li>
 </ul>
 </div>
 
@@ -187,6 +190,77 @@ FUNCTION SplitFileNode(OldPageID, OldPageData):
     6. Promote key to Parent (using PageIDs instead of pointers)
     7. Update Metadata (TotalPages += 1)
 ```
+
+<div id="secondary-index-and-all-file-lookup"></div>
+
+### Secondary Indexes and All File lookup
+
+
+#### 1. All File lookup(The "Slow" Way)
+
+When you run a query like `SELECT * FROM users WHERE email = 'alex@example.com'` and `email` is not indexed, the database cannot use the B+ Tree "roadmap."
+
+Instead, it performs a **Full Table Scan**.
+
+1. **Start at the Beginning:** The database goes to the very first **Leaf Node** (the first page of the linked list at the bottom of the tree).
+2. **Linear Traversal:** It reads every single record on that page, checking if the email matches.
+3. **Follow the Links:** Once it finishes the first page, it uses the `next_node` pointer to jump to the second page.
+4. **Repeat until the end:** It must visit **every single leaf page** in the entire database because the data is sorted by PK, not by email.
+
+> **Performance Hit:** If you have 1 million rows, the database must load all 1 million rows into RAM just to find one email. This is  complexity.
+
+---
+
+#### 2. Searching with a Secondary Index (The "Double Jump")
+
+To fix the slow scan, you create a **Secondary Index** on the `email` column. This creates a **second, completely separate B+ Tree**.
+
+1. **Search the Secondary Tree:** The database traverses the `email` B+ Tree. The "keys (internal nodes)" in this tree are the email strings, and the "values (leaf nodes)" are the **Primary Keys** (e.g., UserID).
+2. **Find the PK:** It finds `'alex@example.com'` in the leaf of the secondary tree and sees that the associated PK is `502`.
+3. **Search the Primary Tree:** Now, it takes that `502` and performs a standard, lightning-fast search in the **Main B+ Tree** to get the actual row data (name, address, etc.).
+
+> **Performance:** This is  for the first tree +  for the second tree. Even for millions of rows, this takes only a few dozen disk reads.
+
+<div id="how-delete-works"></div>
+
+### How Row Deletion Works
+
+Deleting a row is actually more of a "logical" process than a physical one at first. Databases try to avoid moving data around immediately because it's expensive.
+
+**Step A: The Primary Tree (Clustered Index)**
+
+1. **Search:** The DB finds the leaf page containing the Primary Key (e.g., `ID: 502`).
+2. **Mark for Deletion:** Instead of shifting all other records to fill the gap, the DB marks that record with a **"Delete Bit"** (often called a Tombstone).
+3. **Space Reclaim:** The space is now "Free," meaning the next time you insert a record that fits in that spot, the DB will overwrite the old data.
+4. **Merge (Optional):** If a page becomes too empty (e.g., more than 50% empty), the DB might merge it with a neighboring page to keep the tree compact.
+
+*Step B: The Secondary Trees*
+
+This is the "heavy lifting" part.
+
+1. **Lookup:** For **every** index on that table (Email, Username, Date), the DB must go into those specific B+ Trees.
+2. **Remove Entry:** It must find the leaf entry (e.g., `alex@example.com` -> `502`) and delete it.
+3. **Why?** If it didn't do this, the index would point to a PK that no longer exists (a "dangling pointer"), causing errors during searches.
+
+---
+
+<div id="how-col-data-type-change"></div>
+
+### How Column Data Type Change Works
+
+Changing a data type is essentially **destroying and rebuilding** the B+ Trees. As we discussed, B+ Trees rely on the **size** and **sort order** of the data.
+
+If you change a type that changes the size of the data, the DB usually follows these steps:
+
+1. **The New Structure:** The DB creates a new, empty B+ Tree (Table_New) with the new data type.
+2. **The Scan & Convert:** It performs a **Full Table Scan** of the old tree.
+* It reads a row (e.g., `ID: 1, Age: 25`).
+* It converts `25` (Integer) to `25` (BigInt).
+* It inserts the converted row into the **New B+ Tree**.
+
+3. **Index Rebuild:** Because the new rows are a different size, the "offsets" and "pointers" change. Every secondary index must be totally rebuilt from scratch to point to the new Primary Tree.
+4. **The Swap:** Once the new tree is ready, the DB swaps the files and deletes the old B+ Tree.
+
 
 <div id="final-thoughts"></div>
 
