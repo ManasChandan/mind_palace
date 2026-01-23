@@ -7,6 +7,8 @@
 * <a href="#performance-tuning">Advanced Performance Tuning</a>
   * <a href="#partitioning">Partitioning (PARTITION BY)</a>
   * <a href="#z-ordering">Z-Ordering (ZORDER BY)</a>
+  * <a href="#move-together">How They All Move Together</a>
+  * <a href="#liquid-clustering">Liquid Clustering</a>
 * <a href="#log-maintenance">Log Maintenance: Checkpoints & Vacuum</a>
 * <a href="#time-travel">Time Travel & Versioning</a>
 * <a href="#log-vs-footer">Log vs. Footer: The "Search" Hierarchy</a>
@@ -81,6 +83,63 @@ To make these files fast, Delta Lake uses two primary physical organization tech
 * Rearranges data **within** the Parquet files so that similar values are physically close together.
 * **Best For:** High-cardinality columns (UserID, ProductID) used for filtering.
 * **At the File Level:** It creates "tight" **Min/Max statistics** in the footer, allowing the engine to skip 90% of files within a folder.
+
+<div id="move-together"></div>
+
+### 📊 How They All Move Together
+
+When you run a query, the "handshake" between these three looks like this:
+
+| Step | Technique | Scope | Result |
+| --- | --- | --- | --- |
+| **1** | **Partitioning** | Folder | The engine picks the **right folder**. |
+| **2** | **Z-Ordering** | Files | The engine picks the **right files** within that folder using Min/Max stats. |
+| **3** | **Parquet Footer** | Inside File | The engine picks the **right column** and **row group** within those files. |
+
+**The Crux:** Partitioning and Z-Ordering are about **deciding which files to open**. The Parquet Columnar hierarchy is about **deciding which parts of the file to read** once it is open.
+
+Without Partitioning/Z-Ordering, you'd have to open every file to read the footers. Without Parquet, you'd have to read the whole file once you opened it. Together, they allow you to scan petabytes by only touching a few kilobytes of actual data.
+
+<div id="liquid-clustering"></div>
+
+### 📊 Liquid Clustering
+
+#### 1. The Problem Liquid Clustering Solves
+
+In the old system (Partitioning + Z-Order), you had to make hard choices:
+
+* **Partitioning** was "rigid." If you partitioned by `Date`, but then your data grew and you suddenly had too many small files, you had to rewrite the whole table to fix it.
+* **Z-Ordering** was "temporary." Every time you added new data, the Z-Order "decayed," and you had to run a heavy `OPTIMIZE` command to fix the sorting again.
+
+---
+
+#### 2. How it Works: The "Liquid" Approach
+
+Instead of forced folders or perfect sorting, Liquid Clustering uses a dynamic clustering algorithm.
+
+* **At the File Level:** It breaks data into chunks based on the columns you choose (clustering keys). It doesn't use folders; it uses the **Transaction Log** to keep track of which files contain which "clusters" of data.
+* **The Move:** As new data arrives, Liquid Clustering groups it as best as it can. It is "incremental," meaning it doesn't need to rewrite the whole table to keep the data organized.
+
+---
+
+#### 3. Where the Metadata Lives
+
+This brings us back to your previous doubt. With Liquid Clustering:
+
+1. **The Keys:** You define "Clustering Keys" (e.g., `CLUSTER BY (UserID, EventType)`).
+2. **The Log:** The **Delta Transaction Log** stores the clustering information for every file.
+3. **The Skipping:** When you query, the engine looks at the Log, sees the clustering boundaries, and skips files just like Z-Ordering, but much more efficiently.
+
+---
+
+#### 4. Why it’s better than the "Old Way"
+
+| Feature | Partitioning + Z-Order | Liquid Clustering |
+| --- | --- | --- |
+| **Setup** | Must choose partition columns carefully. | Just pick your most-queried columns. |
+| **Maintenance** | Requires frequent, heavy `OPTIMIZE`. | Incremental and fast; works "on the fly." |
+| **Flexibility** | Changing partition keys = Full Rewrite. | You can change clustering keys easily. |
+| **Cardinality** | Bad for high-cardinality (ID) folders. | Handles high-cardinality perfectly. |
 
 ---
 
@@ -196,7 +255,7 @@ UPDATE users SET City = 'London' WHERE ID = 1;
 
 ### The Query Phase
 
-When you run `SELECT * FROM users`, the engine:
+When you run `SELECT * FROM users`, the engine:`
 
 1. Reads `000001.json`.
 2. See that `file_A` is removed and `file_B` is added.
