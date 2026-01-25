@@ -17,6 +17,7 @@
 * <a href="#working-example">Working Example: The "Update" Lifecycle</a>
 * <a href="#high-performance-features">High-Performance Features</a>
 * <a href="#maintenance-safety">Maintenance & Safety</a>
+* <a href="#change-cluster-partion">Changes in Partion or Clustering</a>
 
 ---
 
@@ -291,3 +292,21 @@ Z-Ordering physically rearranges data so that similar values are in the same Par
 | **`OPTIMIZE`** | Merges many small Parquet files into large ones (~1GB).    | Fixes the "Small File Problem" and speeds up reads.      |
 | **`VACUUM`**   | Physically deletes files marked as "removed" in the log.   | Saves money on storage and removes old data.             |
 | **`RESTORE`**  | Points the log back to an older version (e.g., Version 0). | Instant recovery from accidental deletes or bad updates. |
+
+<div href="#change-cluster-partion"></div>
+
+## Changes in Partion or Clustering
+
+### 1. Re-Partitioning Logic
+
+Changing a partition key is a **Global Table Rewrite**. 
+
+- **Physical**: Files move from one folder hierarchy to another.
+- **Logical**: The Transaction Log swaps the entire file set and updates the Partition Schema.
+- **Performance**: Queries optimized for the old key will slow down; queries for the new key will speed up.
+
+### 2. Liquid Clustering vs. Manual Repartition
+
+- **The Conflict**: Manually re-partitioning by a non-clustering column forces Spark to ignore your clustering keys during the write.
+- **The Penalty**: This creates "Unclustered" files that degrade query performance (no Data Skipping).
+- **The Recovery**: Delta Lake's "Liquid" nature will eventually identify these messy files and rewrite them to match the official `CLUSTER BY` keys during the next optimization cycle.
