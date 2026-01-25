@@ -293,7 +293,7 @@ Z-Ordering physically rearranges data so that similar values are in the same Par
 | **`VACUUM`**   | Physically deletes files marked as "removed" in the log.   | Saves money on storage and removes old data.             |
 | **`RESTORE`**  | Points the log back to an older version (e.g., Version 0). | Instant recovery from accidental deletes or bad updates. |
 
-<div href="#change-cluster-partion"></div>
+<div id="change-cluster-partion"></div>
 
 ## Changes in Partion or Clustering
 
