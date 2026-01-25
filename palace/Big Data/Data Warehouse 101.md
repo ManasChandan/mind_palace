@@ -11,6 +11,8 @@
   <li><a href="#fact-types">8. Types of fact tables</a></li>
   <li><a href="#star-vs-snowflake">9. Star schema vs Snowflake schema (and OLAP)</a></li>
   <li><a href="#early-late">10. Early arriving facts and late arriving dimensions</a></li>
+  <li><a href="#fact-table-rule">11. The Fact Table Rule: Tall & Narrow</a></li>
+>
 </ul>
 
 ---
@@ -489,3 +491,50 @@ Example:
 * Use surrogate keys carefully
 
 ---
+
+<div id="fact-table-rule"></div>
+
+### 🧱 The Fact Table Rule: Tall & Narrow
+
+A fact table represents **events** or **observations**. By keeping it tall, you ensure:
+
+* **Predictable Schema:** Adding a new category doesn't require a code change.
+* **Better Compression:** Columnar formats (Parquet/Delta) compress much better when a single column has repetitive values (like "Silver" appearing in 10,000 rows) rather than having 10,000 separate columns.
+* **Efficient Filtering:** Spark can skip entire files if it knows "Gold" isn't in them.
+
+---
+
+### 📏 When is a table "Short and Wide"?
+
+While "Wide" is usually bad for Fact tables, there are specific scenarios where it is actually the preferred design:
+
+#### 1. Dimension Tables (The "Who" and "What")
+
+Dimension tables (like a `Product` or `User` table) are almost always wide. They store descriptive attributes that don't change often.
+
+* **Example:** A `User` table might have 50 columns: `first_name`, `last_name`, `email`, `address`, `loyalty_tier`, etc.
+* **Why:** You aren't calculating sums or averages on these; you are using them to "describe" the facts.
+
+#### 2. Feature Engineering for Machine Learning
+
+ML models (like Linear Regression or XGBoost) generally require a **Single Flattened Row** per observation.
+
+* **Example:** If you are predicting tomorrow's price, the model needs a row like: `[price_today, price_yesterday, 7_day_avg, metal_type_encoded]`.
+* **Why:** Mathematical matrices used in ML need fixed-width inputs.
+
+#### 3. Reporting/Gold Layer Tables
+
+Sometimes, for the very final step of a dashboard (like PowerBI or Tableau), you might "pivot" data into a wide format to make it easier for a human to read or for a specific chart to render.
+
+* **Example:** A final summary table for a CFO showing months as columns.
+
+---
+
+### Summary Comparison
+
+| Attribute | Tall & Narrow (Fact) | Short & Wide (Dimension/ML) |
+| --- | --- | --- |
+| **Primary Use** | Storage & Aggregation | Description & Prediction |
+| **Data Type** | Quantitative (Numbers/Prices) | Qualitative (Names/Attributes) |
+| **Change Frequency** | Appends millions of rows | Updates/Adds few columns |
+| **Spark Performance** | **High** (Columnar friendly) | **Low** (Wide row overhead) |
