@@ -53,6 +53,42 @@ To perform gradient descent, the gradient must be calculated efficiently.
 *   **Backprop:** "Backprop" (Backpropagation) is an algorithm that applies the chain rule to the layer-by-layer architecture of neural networks. It organizes computation as a graph, calculating gradients from the output layer backward. This avoids redundant calculations.
 *   **GPUs:** Backpropagation relies heavily on matrix multiplications. GPUs (Graphics Processing Units), originally designed for video game rendering, are mathematically optimized for these operations, making them essential for modern deep learning.
 
+Backpropagation starts from the end because of the **Chain Rule** in calculus. To figure out how much a specific weight early in the network should change, you first need to know how the final error changed relative to the output.
+
+#### 1. The Mathematical Necessity
+
+In a neural network, the loss  is a function of the output, which is a function of the last layer, which is a function of the layer before it, and so on. To find the gradient of the loss with respect to an early weight , we use the chain rule:
+
+By starting at the end (), we calculate that value **once** and pass it backward. If we started from the front, we would end up recalculating the same downstream derivatives thousands of times for every single weight.
+
+#### 2. Efficiency (Dynamic Programming)
+
+Starting from the end is a form of **dynamic programming**.
+
+* **The "Gradient" is a signal:** As you move backward, you store the intermediate gradients.
+* **Reuse:** The gradient at layer  is used to calculate the gradients for all weights in layer .
+
+If you tried to do this "forward-prop style" (Forward Mode Differentiation), it would be computationally massive for networks with millions of parameters because you'd have to track how every single weight affects every single neuron in the next layer simultaneously.
+
+#### 3. The "Signal" Analogy
+
+* **Forward Pass:** We combine inputs to see what the "guess" is.
+* **Backward Pass:** We compare the "guess" to the "truth."
+
+Since the "truth" (the label) only interacts with the very last layer of the network, that is the only place where the **error signal** is born. We then flow that signal backward through the paths that created it.
+
+#### Comparison at a Glance
+
+| Feature | Forward Pass | Backward Pass |
+| --- | --- | --- |
+| **Direction** | Input  Output | Output  Input |
+| **Purpose** | Prediction / Inference | Learning / Optimization |
+| **Key Math** | Matrix Multiplication | Chain Rule |
+| **Dependency** | Needs Input Data | Needs the Loss (Error) |
+
+![x](app/static/backprop_re_calculation.png)
+
+
 ### **6. Stochastic Gradient Descent (SGD)**
 For large datasets, calculating the gradient using *all* data points ($n$) for every step is computationally too expensive.
 *   **The Solution:** Instead of the full dataset, the algorithm uses a small, random sample called a **minibatch** (e.g., 32 observations) to estimate the gradient.
