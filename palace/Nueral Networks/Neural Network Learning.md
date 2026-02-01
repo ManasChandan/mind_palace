@@ -1,3 +1,7 @@
+Inspired From - [MIT OpenCourseWare](https://ocw.mit.edu/courses/15-773-hands-on-deep-learning-spring-2024/)
+
+My Notebook - [Deep Learning Intro](https://github.com/ManasChandan/deep-learning-series/blob/master/Deep_Learning_1.ipynb)
+
 ### **1. Neural Network Design: Strategy and Case Study**
 
 **Design Philosophy**
@@ -98,6 +102,104 @@ For large datasets, calculating the gradient using *all* data points ($n$) for e
 *   **Adam Optimizer:** The course specifically uses **Adam**, a popular variation of SGD, as the default optimizer.
 
 ![x](app/static/neural_netwrok_building_blocks.png)
+
+### **7. Advanced Training Dynamics**
+
+**Epochs: The Full Training Cycle**
+An **epoch** is one complete pass through the entire training dataset. Since neural networks learn incrementally, a single epoch is rarely enough to minimize the loss; models typically require dozens or hundreds of epochs to converge.
+
+**Stochastic Gradient Descent (SGD) & Adam**
+
+* **SGD & Epoch Counting:** In SGD, we update weights after processing each **minibatch** (a small random sample, e.g., 32 rows). An epoch is completed once the model has seen every minibatch in the dataset exactly once.
+* **Adam (Adaptive Moment Estimation):** While SGD uses a fixed learning rate (), **Adam** is an advanced optimizer that adapts the learning rate for each individual weight. It is effectively "SGD with momentum and adaptive scaling," making it the industry standard for faster and more stable convergence.
+
+**Regularization and Management: Callbacks**
+
+* **Callbacks:** These are utilities that perform actions at various stages of training (e.g., at the end of an epoch).
+* **Early Stopping:** A specific callback that monitors the validation loss. If the loss stops improving for a set number of epochs, training is halted to prevent overfitting and save time.
+* **Dropout:** A regularization technique where a random percentage of neurons are "ignored" during each training step. This prevents the network from becoming overly reliant on specific paths, forcing it to learn more robust features.
+
+---
+
+### **8. Specialized Loss Functions**
+
+**Binary vs. Categorical Cross-Entropy**
+
+The core problem these loss functions solve is how to mathematically penalize a "wrong" probability. In classification, we aren't just looking for the right answer; we are looking for **confidence** in that answer.
+
+**The Problem with Mean Squared Error (MSE) for Classification**
+
+While MSE is perfect for regression, it fails in classification for two main reasons:
+
+* **Vanishing Gradients:** The Sigmoid and Softmax functions become very "flat" as they approach 0 or 1. If the model is confidently wrong (e.g., predicting 0.99 for a 0 label), the MSE gradient becomes so small that the model stops learning.
+* **Non-Convexity:** Using MSE with a Sigmoid activation creates a "bumpy" loss surface with many local minima, making it difficult for Gradient Descent to find the global minimum.
+
+**Binary Cross-Entropy (BCE)**
+
+BCE is designed to heavily penalize predictions that are "confident but wrong" using logarithmic curves.
+
+* **The Logarithmic Penalty:** * If the true label is , the loss is . As the prediction  approaches 0, the loss approaches **infinity**.
+* If the true label is , the loss is . As the prediction  approaches 1, the loss approaches **infinity**.
+
+* **The Combined Formula:** To allow a single line of code to handle both cases without `if/else` logic, we use:
+
+* If , the second term  becomes 0, leaving only the first term.
+* If , the first term  becomes 0, leaving only the second term.
+
+**Transitioning to Multi-Class: Categorical Cross-Entropy (CCE)**
+
+When moving from 2 classes (Heart Disease vs. No Heart Disease) to  classes (e.g., Apple vs. Banana vs. Orange), the logic "rolls back" into a summation.
+
+1. **From Sigmoid to Softmax:** In binary, we use one neuron with a Sigmoid (0 to 1). In multi-class, we use  neurons with a **Softmax** activation. Softmax ensures that all output probabilities across all classes sum exactly to 1.0 (e.g., 0.7 Apple, 0.2 Banana, 0.1 Orange).
+2. **The CCE Formula:** Instead of checking , we sum the log-loss for every class :
+
+
+3. **One-Hot Encoding Interaction:** In practice, since  is **One-Hot Encoded** (meaning  is 1 for the correct class and 0 for all others), the summation ignores all classes except the "True" one.
+> **Example:** If the true fruit is an Apple (), the loss is simply . The model is essentially told: "I only care about how much probability you assigned to the correct answer; the higher it is, the lower the loss".
+
+**Regression Example**
+
+In regression-based problems, the goal is to predict a continuous numerical value rather than a discrete class. Because of this, the design of the activation functions—particularly in the output layer—differs significantly from classification tasks.
+
+
+**Activation Functions in Regression**
+
+* **Hidden Layers:** For the intermediate (hidden) layers of a regression network, the **ReLU (Rectified Linear Unit)** function remains the standard recommendation and default choice.
+* **Output Layer:** The activation function in the final layer is determined by the specific range and nature of the numerical value you are trying to predict.
+
+
+**The Linear Function at the Output Layer**
+
+The most common "function" used at the end of a regression network is the **Linear Activation Function** (also known as the "identity" function).
+
+* **Definition:** A linear activation simply passes the weighted sum of the inputs and the bias directly to the output without transformation: .
+* **Purpose:** It allows the model to output any real number, ranging from negative infinity to positive infinity.
+* **When to Use:** Use a linear activation (or no activation function at all, which defaults to linear in Keras/TensorFlow) when your target variable is an unbounded continuous value, such as predicting a temperature, a stock price, or a physical measurement.
+
+
+**Other Output Layer Scenarios**
+
+While the linear function is the standard, other functions are used if the output must be constrained:
+
+* **Sigmoid:** If your regression target is strictly bounded between **0 and 1** (e.g., predicting a percentage or a probability-like score).
+* **ReLU:** If your output must be **non-negative** (0 or higher) but has no upper limit (e.g., predicting the count of items or an absolute distance).
+* **Softplus:** A smooth version of ReLU that is often used when you need a non-negative output that is differentiable everywhere, frequently used in predicting variances or standard deviations.
+
+---
+
+### **9. The TensorFlow Ecosystem**
+
+**Tensors and Frameworks**
+
+* **Tensors:** The fundamental data structure in Deep Learning. Tensors are multi-dimensional arrays (0D = scalar, 1D = vector, 2D = matrix, 3D+ = tensor) that can be processed efficiently on GPUs.
+* **TensorFlow:** An end-to-end open-source platform for machine learning developed by Google.
+* **Keras:** The high-level API for TensorFlow that allows for fast, human-readable model prototyping.
+
+**The 3 Ways to Build Models in Keras**
+
+1. **Sequential API:** The simplest method where layers are stacked in a plain list (one input, one output).
+2. **Functional API:** Used for complex models with multiple inputs, multiple outputs, or shared layers. (Example: `output = Dense(1)(h)`).
+3. **Model Subclassing:** The most flexible "Pythonic" approach where you define the forward pass manually inside a class, used primarily for custom research and complex logic.
 
 
 ### **Summary of the Training Loop**
