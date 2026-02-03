@@ -142,7 +142,47 @@ This brings us back to your previous doubt. With Liquid Clustering:
 | **Flexibility** | Changing partition keys = Full Rewrite. | You can change clustering keys easily. |
 | **Cardinality** | Bad for high-cardinality (ID) folders. | Handles high-cardinality perfectly. |
 
----
+#### 5. What Happens if we change clustering columns
+
+This is one of the most significant advantages of Liquid Clustering over traditional partitioning or bucketing. When you change the clustering columns, you **do not** have to rewrite the entire table immediately; instead, the change is handled **incrementally and metadata-first**.
+
+Here is exactly how that process works:
+
+**1. Metadata-Driven Updates**
+
+When you run a command to change the clustering columns, Delta Lake simply updates the **table metadata** to reflect the new clustering keys.
+
+* It does not trigger a massive "Move" or "Rewrite" job for the existing data files right away.
+* The existing data remains in its old physical layout until a maintenance operation or a write occurs.
+
+**2. Incremental Re-clustering**
+
+The actual physical reorganization happens "on the fly" or during scheduled maintenance:
+
+* **New Writes:** Any new data written to the table after the change will be clustered using the **new** columns immediately.
+* **OPTIMIZE Command:** When you run the `OPTIMIZE` command, Spark looks for files that are not yet clustered according to the latest metadata.
+* **Partial Rewrites:** Spark will only rewrite the specific files that need to be reorganized to satisfy the new clustering definition, rather than the entire multi-terabyte table.
+
+**Contrast with Traditional Bucketing**
+
+To appreciate why this is "Liquid," compare it to the rigid nature of Bucketing:
+
+* **In Bucketing:** If you change the bucket column from `user_id` to `order_id`, the hash function is completely different. Spark cannot "incrementally" fix this; you must perform a full `overwrite` to re-distribute every single row into new physical files.
+* **In Liquid Clustering:** Because it uses a flexible coordinate system (like a Hilbert curve), the system can coexist with some files clustered by "Column A" and others by "Column B" while it works in the background to unify them.
+
+**Why it matters for Real-World Pipelines**
+
+* **Evolution:** You can start your project clustering by `Region`, and six months later—as your query patterns change—switch to clustering by `Product_ID` without any downtime or massive compute costs.
+* **Efficiency:** Because the clustering is **incremental**, you spread the cost of reorganization over time rather than hitting your budget with one massive "re-bucket" job.
+
+**Summary Table: The Change Process**
+
+| Action | Bucketing | Liquid Clustering |
+| --- | --- | --- |
+| **Change Columns** | Full Table Rewrite Required. | Metadata Update (Immediate). |
+| **Old Data** | Must be re-hashed immediately. | Re-clustered lazily during `OPTIMIZE`. |
+| **New Data** | Follows new bucket logic. | Follows new clustering keys. |
+
 
 <div id="log-maintenance"></div>
 
