@@ -1,3 +1,5 @@
+## https://github.com/ManasChandan/deep-learning-series/blob/master/Deep_Learning_3_CNN_2.ipynb
+
 Welcome to the fascinating world of Computer Vision! Moving from standard Deep Learning to Convolutional Neural Networks (CNNs) is like moving from looking at a pile of puzzle pieces to actually seeing the picture they form.
 
 Here is an in-depth breakdown of how CNNs revolutionize how machines "see."
