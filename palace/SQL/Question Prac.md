@@ -83,3 +83,55 @@ SELECT (SELECT...),NULL (1 row)
 SELECT score, DENSE_RANK() OVER (ORDER BY SCORE DESC) AS rank
 FROM Scores ORDER BY rank;
 ```
+
+## https://leetcode.com/problems/consecutive-numbers/
+
+```sql
+-- Write your PostgreSQL query statement below
+WITH lags as (
+    SELECT
+        *, 
+        LAG(num) OVER (ORDER BY id) as lag_num_1, 
+        LAG(num, 2) OVER (ORDER BY id) as lag_num_2
+    FROM
+        Logs
+)
+
+SELECT distinct(lag_num_2) as  ConsecutiveNums from
+lags where num = lag_num_1 and num = lag_num_2;
+```
+
+| Feature | Option 1 (Self-Joins) | Option 2 (Window Functions) |
+| --- | --- | --- |
+| **Logic** | Joins the table to itself three times. | Scans the table once using a "sliding window." |
+| **Performance** | **Lower.** Becomes very slow as the dataset grows (Exponential complexity). | **Higher.** Much more efficient on large datasets (Linear complexity). |
+| **Readability** | Easier for beginners to understand. | Cleaner and more "modern" SQL syntax. |
+| **Edge Cases** | Fails if IDs have gaps (e.g., 1, 2, 4). | Handles ID gaps better (depending on the `ORDER BY`). |
+| **Scalability** | Hard to scale (e.g., finding 10 consecutive numbers would require 10 joins). | Easy to scale (just adjust the `LAG` offset). |
+
+# https://leetcode.com/problems/employees-earning-more-than-their-managers/
+
+```sql
+-- Write your PostgreSQL query statement below
+select e.name as Employee
+from Employee e
+inner join
+Employee m
+on e.managerId = m.id
+where e.salary > m.salary
+```
+
+# https://leetcode.com/problems/duplicate-emails/
+
+```sql
+-- Write your PostgreSQL query statement below
+SELECT 
+    email
+FROM 
+    Person
+GROUP BY
+    email
+HAVING
+    count(*) > 1
+```
+

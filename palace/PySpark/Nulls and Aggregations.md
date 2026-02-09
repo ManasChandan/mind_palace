@@ -79,3 +79,109 @@ When combining datasets with different column sequences, **`unionByName`** is yo
 Understanding how data is partitioned across executors is vital. 
 *   **Repartition:** Increases or decreases partitions by shuffling data—ideal for partitioning by a specific column to ensure similar data (like `dept_id`) sits together.
 *   **Coalesce:** A more efficient way to *reduce* partitions because it avoids a full data shuffle.
+
+## 5. More on Joins
+
+In Spark, there are **Logical Joins** (what you write in SQL) and **Physical Join Strategies** (how Spark actually moves the data).
+
+### 1. Logical Join Types
+
+These define *what* data you want to see.
+
+| Join Type | Description |
+| --- | --- |
+| **Inner** | Returns rows where keys match in both tables. (Default) |
+| **Left / Right Outer** | Returns all rows from one side plus matching rows from the other. |
+| **Full Outer** | Returns all rows from both tables, filling with `NULL` where no match exists. |
+| **Left Semi** | Returns rows from the Left table *only if* a match exists on the Right. (Doesn't keep Right columns). |
+| **Left Anti** | Returns rows from the Left table *only if* there is **no** match on the Right. Great for finding "missing" data. |
+| **Cross Join** | Cartesian product (every row joined with every row). **Danger:** Can crash your cluster if tables are large. |
+
+### 2. Physical Join Strategies (The "Internal" Mechanics)
+
+This is where the performance magic happens. Spark's optimizer (Catalyst) chooses these based on table size.
+
+#### A. Broadcast Hash Join (BHJ)
+
+* **How it works:** Spark sends the entire "small" table to every executor. The large table stays where it is.
+* **Best for:** One small table (default threshold is **10MB**) and one large table.
+* **Why it's fast:** **Zero Shuffle.** No data is moved across the network except the small table once.
+* **Risk:** If the small table is actually big, you'll get an OOM on your executors.
+
+#### B. Shuffle Sort-Merge Join (SMJ)
+
+* **How it works:** 1. **Shuffle:** Both tables are hashed by the join key and moved so matching keys are on the same node.
+2. **Sort:** Each partition is sorted.
+3. **Merge:** Spark iterates through the sorted data and merges matches.
+* **Best for:** Two large tables.
+* **Why it's fast:** It is the most robust strategy. It can spill to disk if memory is low, so it rarely crashes.
+* **Risk:** High network I/O due to the shuffle.
+
+#### C. Shuffle Hash Join (SHJ)
+
+* **How it works:** Similar to Shuffle Sort-Merge, but instead of sorting, it builds a Hash Table for each partition.
+* **Best for:** Large tables where one side is significantly smaller than the other (but too big to broadcast) and keys are evenly distributed.
+* **Risk:** If a single partition is too large to fit in memory as a hash table, it will OOM.
+
+#### D. Broadcast Nested Loop Join (BNLJ)
+
+* **How it works:** A nested loop (for each row in A, look at every row in B).
+* **Best for:** Non-equi joins (e.g., `a.id > b.id`) or very small tables.
+* **Risk:** Extremely slow. Use only as a last resort.
+
+### 3. Comparison Table: Which Strategy to Use?
+
+| Strategy | Hint | Condition | Efficiency | Handle Skew? |
+| --- | --- | --- | --- | --- |
+| **Broadcast** | `/*+ BROADCAST(table) */` | `==` (Equi-join) | **Best** | Yes |
+| **Sort-Merge** | `/*+ MERGE(table) */` | `==` (Equi-join) | **Scalable** | Moderately |
+| **Shuffle Hash** | `/*+ SHUFFLE_HASH(table) */` | `==` (Equi-join) | **Good** | No |
+| **Nested Loop** | `/*+ SHUFFLE_REPLICATE_NL(table) */` | Any (>, <, !=) | **Worst** | No |
+
+## 6. SHJ vs. Sort-Merge Join (SMJ)
+
+In a **Shuffle Hash Join (SHJ)**, Spark builds a classic in-memory hash table (hash map) for one side of the join (the "build" side) within each partition.
+
+To understand exactly what is stored, you have to look at the two-step process: **Shuffle** then **Hash**.
+
+### 1. What is inside the Map?
+
+For every partition, Spark takes the smaller of the two datasets (after shuffling them so that matching keys are on the same executor) and builds a map in memory.
+
+* **The Key:** The **Join Key** (or a hash of the join key).
+* **The Value:** A **list of rows** (or pointers to rows) that correspond to that specific join key.
+
+Because multiple rows can have the same join key (one-to-many relationships), the hash map must store a collection of rows for every unique key.
+
+### 2. How the process works (Step-by-Step)
+
+1. **Shuffle Phase:** Both the left and right tables are partitioned based on the hash of the join key. This ensures that all rows with `ID=101` from Table A and Table B end up in the same partition on the same executor.
+2. **Build Phase:** On each executor, Spark takes the *shuffled* data from the "build" table and constructs an **in-memory Hash Map**.
+3. **Probe Phase:** Spark iterates through the other table (the "probe" table) row by row. For each row, it calculates the hash of the join key, looks it up in the Hash Map, and if a match is found, it joins the rows.
+
+### 3. SHJ vs. Sort-Merge Join (SMJ)
+
+This is where it gets interesting for performance:
+
+| Feature | Shuffle Hash Join (SHJ) | Sort-Merge Join (SMJ) |
+| --- | --- | --- |
+| **Storage** | A **Hash Map** in memory. | Sorted blocks of data on disk/memory. |
+| **CPU Cost** | Low (Hash lookups are ). | High (Sorting takes ). |
+| **Memory Risk** | **High.** If the hash map for a partition exceeds available memory, you get an **OOM error**. | **Low.** Can "spill" to disk easily without crashing. |
+
+### 4. Why does Spark prefer Sort-Merge by default?
+
+Spark usually defaults to **Sort-Merge Join** because it is safer. In a **Shuffle Hash Join**, if your data has "Skew" (e.g., 80% of your rows have the same `user_id`), the Hash Map for that one partition will explode in size, exceeding the `spark.executor.memory`, and your job will fail.
+
+**Sort-Merge** handles this by sorting the data. Even if the data is huge, it can read the sorted files sequentially from disk, which is much more stable than trying to cram everything into an in-memory map.
+
+### When should you use SHJ?
+
+You might manually force a Shuffle Hash Join using a hint:
+`df1.hint("SHUFFLE_HASH").join(df2, "id")`
+
+**Use it when:**
+
+1. Your tables are too large to **Broadcast**.
+2. But they are small enough that a single partition's "build side" fits comfortably in memory.
+3. You want to avoid the expensive **Sort** step of the Sort-Merge Join to save CPU cycles.

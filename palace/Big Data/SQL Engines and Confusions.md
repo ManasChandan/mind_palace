@@ -320,3 +320,40 @@ Service Layer (Databricks SQL)
 * **Spark SQL** separates storage, metadata, and execution
 * **Databricks SQL Warehouse** turns Spark + Delta into a true **cloud data warehouse**
 
+# SQL and Its Comparisons
+
+### SQL Performance Comparison Table
+
+| Pattern | Best For... | Performance Level | Why? |
+| --- | --- | --- | --- |
+| **Simple Filter (`WHERE`)** | Reducing the dataset size immediately. | **Elite** | Indexes can skip reading the rest of the table entirely. |
+| **`EXISTS` / `NOT EXISTS**` | Checking for presence in another table. | **High** | Stops searching as soon as it finds a single match ("Short-circuiting"). |
+| **`GROUP BY` + `HAVING**` | Counting, summing, or finding duplicates. | **High** | Uses "Hash Aggregation"—very memory efficient for counts. |
+| **`UNION ALL`** | Combining two result sets. | **High** | Just appends the data without checking for duplicates. |
+| **Window Functions (`LAG`, `RANK`)** | Row-to-row comparisons or finding "N-th" records. | **Medium** | Requires a "Sort" step and a "Scan" of the whole window. |
+| **`DISTINCT`** | Removing duplicates from a result set. | **Medium** | Forces a sort or hash of the entire result set at the very end. |
+| **`IN` (with Subquery)** | Filtering based on a small, static list. | **Medium** | Can be slow if the subquery returns a massive amount of data. |
+| **Self-Joins (`JOIN` on same table)** | Comparing rows (like the Consecutive Nums problem). | **Low** | Complexity grows exponentially () as the table grows. |
+| **`UNION` (without ALL)** | Combining sets and removing duplicates. | **Low** | It performs a `UNION ALL` + a `DISTINCT` check, doubling the work. |
+| **`LIKE '%text%'`** | Wildcard searching at the start of a string. | **Poor** | Prevents index usage; forces a "Full Table Scan." |
+
+### Decision Flowchart (The "Walk-through" Guide)
+
+Before you write your query, ask yourself these three questions:
+
+1. **Do I need the whole row or just the count?**
+* *Just count/presence:* Use **`GROUP BY`** or **`EXISTS`**.
+* *Whole row:* Use **Window Functions**.
+
+
+2. **Am I comparing a row to the row "next" to it?**
+* *Yes:* Use **`LAG()`** or **`LEAD()`**. Avoid Self-Joins if possible.
+
+
+3. **Am I joining on a calculated value (e.g., `ON a.id + 1 = b.id`)?**
+* *Try to avoid:* This usually breaks index lookups. Use **Window Functions** instead to look at the next logical row.
+
+
+4. **Do I really need `DISTINCT`?**
+* *Check:* If you can use a more specific `WHERE` clause or a `GROUP BY` to get unique rows, it's usually faster than slapping `DISTINCT` on the final output.
+
