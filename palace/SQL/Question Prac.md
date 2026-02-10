@@ -195,3 +195,61 @@ select id from lead_temp
 where temperature > prev_temp and 
 recordDate::date - prev_date::date = 1;
 ```
+
+# https://leetcode.com/problems/trips-and-users/ [HARD]
+
+```sql
+with temp as
+(select *,
+case
+when status = 'cancelled_by_client' or status = 'cancelled_by_driver' then 1
+else 0 end as score
+from trips
+where client_id not in (select users_id from users where banned = 'Yes')
+and driver_id not in (select users_id from users where banned = 'Yes'))
+
+select request_at as Day, round(sum(score*1.0)/count(score),2) as "Cancellation Rate"
+from temp
+group by request_at
+having request_at between '2013-10-01' and '2013-10-03'
+
+----------------------------------------------------------------------------------------------
+
+-- Write your PostgreSQL query statement below
+with unbanned_users as (
+    select users_id from Users 
+    where banned = 'No'
+),
+unbanned_trips as (
+    select t.* from
+    Trips t
+    inner join
+    unbanned_users uu
+    on t.client_id = uu.users_id
+    inner join
+    unbanned_users uu_new
+    on t.driver_id = uu_new.users_id
+),
+num_cancelled as (
+    select request_at, count(*) as cancelled_num
+    from unbanned_trips t
+    where t.status != 'completed'
+    group by request_at
+),
+num_all as (
+    select request_at, count(*) as all_num
+    from unbanned_trips t
+    group by request_at
+)
+
+select 
+    all_rec.request_at as Day, 
+    ROUND(COALESCE(can.cancelled_num, 0) * 1.0 / all_rec.all_num,2) as "Cancellation Rate"
+from 
+    num_all as all_rec 
+left join 
+    num_cancelled as can 
+on can.request_at = all_rec.request_at
+where all_rec.request_at >= '2013-10-01' and all_rec.request_at <= '2013-10-03'
+order by all_rec.request_at
+```
