@@ -135,3 +135,63 @@ HAVING
     count(*) > 1
 ```
 
+# https://leetcode.com/problems/department-highest-salary/description/
+
+```sql
+-- Write your PostgreSQL query statement below
+with salary_ranked as (
+    select d.name as Department, e.name as Employee, e.salary as Salary, 
+        DENSE_RANK() over (PARTITION BY departmentId order by e.salary desc) as rk
+    from
+    Employee e
+    left join
+    Department d
+    on e.departmentId = d.id
+)
+select Department, Employee, Salary from 
+salary_ranked where rk = 1;
+```
+
+# https://leetcode.com/problems/department-top-three-salaries/
+
+```sql
+-- Write your PostgreSQL query statement below
+with salary_ranked as (
+    select d.name as Department, e.name as Employee, e.salary as Salary, 
+        DENSE_RANK() over (PARTITION BY departmentId order by e.salary desc) as rk
+    from
+    Employee e
+    left join
+    Department d
+    on e.departmentId = d.id
+)
+select Department, Employee, Salary from 
+salary_ranked where rk <= 1;
+```
+
+# https://leetcode.com/problems/delete-duplicate-emails/submissions/1914826219/
+
+```sql
+-- Write your PostgreSQL query statement below
+with dup_idf as (
+    select min(id) as keep_id from Person p
+    group by p.email
+)
+delete from Person where id not in (select keep_id from dup_idf)
+```
+
+# https://leetcode.com/problems/rising-temperature/submissions/1914836465/
+
+```sql
+-- Write your PostgreSQL query statement below
+with lead_temp as (
+    select *, 
+        LAG(temperature) OVER (ORDER BY recordDate) as prev_temp, 
+        LAG(recordDate) OVER (ORDER BY recordDate) as prev_date
+    from
+        Weather
+)
+select id from lead_temp
+where temperature > prev_temp and 
+recordDate::date - prev_date::date = 1;
+```
