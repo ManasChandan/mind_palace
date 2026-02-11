@@ -253,3 +253,31 @@ on can.request_at = all_rec.request_at
 where all_rec.request_at >= '2013-10-01' and all_rec.request_at <= '2013-10-03'
 order by all_rec.request_at
 ```
+
+# https://leetcode.com/problems/game-play-analysis-iv/?envType=problem-list-v2&envId=database
+
+```sql
+-- Write your PostgreSQL query statement below
+with next_day as (
+    select player_id, min(event_date) + interval '1day' as next_day_after_login
+    from Activity group by player_id
+), next_day_players as (
+    select a.player_id as player_id from Activity a
+    join next_day n
+    on a.player_id = n.player_id and a.event_date = n.next_day_after_login
+)
+
+select round((select count(distinct(player_id)) * 1.0 from next_day_players )/(select count(distinct(player_id)) from Activity),2) as fraction;
+```
+# https://leetcode.com/problems/managers-with-at-least-5-direct-reports/description/?envType=problem-list-v2&envId=database
+
+```sql
+-- Write your PostgreSQL query statement below
+select e2.name as name from 
+Employee e1
+join
+Employee e2
+on e1.managerId = e2.id
+group by e1.managerId, e2.name
+having count(distinct(e1.id)) >= 5
+```
