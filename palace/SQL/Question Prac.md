@@ -1,4 +1,4 @@
-## https://leetcode.com/problems/combine-two-tables/
+### https://leetcode.com/problems/combine-two-tables/
 
 ```sql
 select b.firstName, b.lastName, a.city, a.state
@@ -8,7 +8,7 @@ left join Address as a on b.personId = a.personId
 
 **Dot operator performs faster**
 
-## https://leetcode.com/problems/second-highest-salary/
+### https://leetcode.com/problems/second-highest-salary/
 
 ```sql
 SELECT MAX(salary) AS "SecondHighestSalary" 
@@ -28,7 +28,7 @@ limit 1
 
 **Aggregates return null if all the rows are filtered out**
 
-## https://leetcode.com/problems/nth-highest-salary/description/
+### https://leetcode.com/problems/nth-highest-salary/description/
 
 ```sql
 CREATE OR REPLACE FUNCTION NthHighestSalary(N INT) RETURNS TABLE (Salary INT) AS $$
@@ -76,7 +76,7 @@ SELECT MAX()...,NULL (1 row)
 
 SELECT (SELECT...),NULL (1 row)
 
-## https://leetcode.com/problems/rank-scores/
+### https://leetcode.com/problems/rank-scores/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -84,7 +84,7 @@ SELECT score, DENSE_RANK() OVER (ORDER BY SCORE DESC) AS rank
 FROM Scores ORDER BY rank;
 ```
 
-## https://leetcode.com/problems/consecutive-numbers/
+### https://leetcode.com/problems/consecutive-numbers/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -109,7 +109,7 @@ lags where num = lag_num_1 and num = lag_num_2;
 | **Edge Cases** | Fails if IDs have gaps (e.g., 1, 2, 4). | Handles ID gaps better (depending on the `ORDER BY`). |
 | **Scalability** | Hard to scale (e.g., finding 10 consecutive numbers would require 10 joins). | Easy to scale (just adjust the `LAG` offset). |
 
-# https://leetcode.com/problems/employees-earning-more-than-their-managers/
+### https://leetcode.com/problems/employees-earning-more-than-their-managers/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -121,7 +121,7 @@ on e.managerId = m.id
 where e.salary > m.salary
 ```
 
-# https://leetcode.com/problems/duplicate-emails/
+### https://leetcode.com/problems/duplicate-emails/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -135,7 +135,7 @@ HAVING
     count(*) > 1
 ```
 
-# https://leetcode.com/problems/department-highest-salary/description/
+### https://leetcode.com/problems/department-highest-salary/description/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -152,7 +152,7 @@ select Department, Employee, Salary from
 salary_ranked where rk = 1;
 ```
 
-# https://leetcode.com/problems/department-top-three-salaries/
+### https://leetcode.com/problems/department-top-three-salaries/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -169,7 +169,7 @@ select Department, Employee, Salary from
 salary_ranked where rk <= 1;
 ```
 
-# https://leetcode.com/problems/delete-duplicate-emails/submissions/1914826219/
+### https://leetcode.com/problems/delete-duplicate-emails/submissions/1914826219/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -180,7 +180,7 @@ with dup_idf as (
 delete from Person where id not in (select keep_id from dup_idf)
 ```
 
-# https://leetcode.com/problems/rising-temperature/submissions/1914836465/
+### https://leetcode.com/problems/rising-temperature/submissions/1914836465/
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -196,7 +196,7 @@ where temperature > prev_temp and
 recordDate::date - prev_date::date = 1;
 ```
 
-# https://leetcode.com/problems/trips-and-users/ [HARD]
+### https://leetcode.com/problems/trips-and-users/ [HARD]
 
 ```sql
 with temp as
@@ -254,7 +254,7 @@ where all_rec.request_at >= '2013-10-01' and all_rec.request_at <= '2013-10-03'
 order by all_rec.request_at
 ```
 
-# https://leetcode.com/problems/game-play-analysis-iv/?envType=problem-list-v2&envId=database
+### https://leetcode.com/problems/game-play-analysis-iv/?envType=problem-list-v2&envId=database
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -269,7 +269,7 @@ with next_day as (
 
 select round((select count(distinct(player_id)) * 1.0 from next_day_players )/(select count(distinct(player_id)) from Activity),2) as fraction;
 ```
-# https://leetcode.com/problems/managers-with-at-least-5-direct-reports/description/?envType=problem-list-v2&envId=database
+### https://leetcode.com/problems/managers-with-at-least-5-direct-reports/description/?envType=problem-list-v2&envId=database
 
 ```sql
 -- Write your PostgreSQL query statement below
@@ -280,4 +280,43 @@ Employee e2
 on e1.managerId = e2.id
 group by e1.managerId, e2.name
 having count(distinct(e1.id)) >= 5
+```
+
+### https://leetcode.com/problems/find-customer-referee/
+
+```sql
+select name
+from Customer
+where referee_id !=2 is not false
+```
+
+### https://leetcode.com/problems/investments-in-2016/
+
+```sql
+SELECT ROUND(SUM(tiv_2016), 2) AS tiv_2016
+FROM (
+    SELECT tiv_2016,
+           COUNT(*) OVER(PARTITION BY tiv_2015) as tiv_count,
+           COUNT(*) OVER(PARTITION BY lat, lon) as loc_count
+    FROM Insurance
+) t
+WHERE tiv_count > 1 AND loc_count = 1;
+
+-- WRONG SOLUTION
+-- The below solution eliminates for a pid that can be included 
+-- but their couterparty got removed due the fact of lat lon removal. 
+
+with drop_duplicate as (
+    select min(tiv_2015) as tiv_2015, min(tiv_2016) as tiv_2016
+    from Insurance
+    group by lat, lon
+    having count(lat) = 1 and count(lon) = 1
+), tiv_sums as (
+    select sum(tiv_2016) as sum_tiv from
+    drop_duplicate group by tiv_2015
+    having count(*) > 1
+)
+
+select ROUND(SUM(sum_tiv), 2) as tiv_2016 from 
+tiv_sums;
 ```
