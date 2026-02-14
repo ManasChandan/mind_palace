@@ -320,3 +320,49 @@ with drop_duplicate as (
 select ROUND(SUM(sum_tiv), 2) as tiv_2016 from 
 tiv_sums;
 ```
+
+### https://leetcode.com/problems/human-traffic-of-stadium/
+
+This is a classic SQL problem (often referred to as the "Stadium Problem") that tests your ability to identify patterns in sequences. To solve this, we need to find groups of at least three rows where the `id` values are consecutive and every row in that sequence has a `people` count .
+
+The most efficient way to handle this is by using a **window function** to create a "grouping" key.
+
+If you subtract a sequential row number (`ROW_NUMBER()`) from a consecutive `id`, the result will be a constant value for that specific sequence.
+
+* **Example:** If IDs are 5, 6, 7 and row numbers are 1, 2, 3...
+* $5 - 1 = 4$
+* $6 - 2 = 4$
+* $7 - 3 = 4$
+
+* Because the difference is the same (**4**), we know these records belong together.
+
+```sql
+WITH GroupedSequences AS (
+    SELECT 
+        *,
+        -- id - row_number gives a constant value for consecutive sequences
+        id - ROW_NUMBER() OVER (ORDER BY id) AS id_group
+    FROM Stadium
+    WHERE people >= 100
+),
+SequenceCounts AS (
+    SELECT 
+        *,
+        -- Count how many rows are in each 'id_group'
+        COUNT(*) OVER (PARTITION BY id_group) AS group_len
+    FROM GroupedSequences
+)
+-- Only select records from groups that have 3 or more rows
+SELECT 
+    id, 
+    visit_date, 
+    people
+FROM SequenceCounts
+WHERE group_len >= 3
+ORDER BY visit_date;
+
+```
+
+1. **`GroupedSequences` CTE**: First, we filter for rows where `people >= 100`. Then, we calculate the difference between the `id` and a generated `ROW_NUMBER`. This creates a unique identifier (`id_group`) for every consecutive stretch of IDs.
+2. **`SequenceCounts` CTE**: We use another window function (`COUNT(*) OVER...`) to check how many rows exist within each of those unique groups.
+3. **Final Select**: We filter out any groups that have fewer than 3 records and sort the final result by date.
