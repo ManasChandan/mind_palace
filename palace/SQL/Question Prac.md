@@ -366,3 +366,16 @@ ORDER BY visit_date;
 1. **`GroupedSequences` CTE**: First, we filter for rows where `people >= 100`. Then, we calculate the difference between the `id` and a generated `ROW_NUMBER`. This creates a unique identifier (`id_group`) for every consecutive stretch of IDs.
 2. **`SequenceCounts` CTE**: We use another window function (`COUNT(*) OVER...`) to check how many rows exist within each of those unique groups.
 3. **Final Select**: We filter out any groups that have fewer than 3 records and sort the final result by date.
+
+### https://leetcode.com/problems/tree-node/
+
+```sql
+SELECT 
+    id,
+    CASE 
+        WHEN p_id IS NULL THEN 'Root'
+        WHEN id IN (SELECT p_id FROM Tree WHERE p_id IS NOT NULL) THEN 'Inner'
+        ELSE 'Leaf'
+    END AS type
+FROM Tree
+```
