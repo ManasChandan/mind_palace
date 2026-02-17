@@ -31,3 +31,36 @@ SET sex = CASE
     ELSE 'm'
 END
 ```
+
+### https://leetcode.com/problems/market-analysis-i/
+
+```sql
+SELECT 
+u.user_id as buyer_id, 
+u.join_date, 
+count(o.order_id) as 'orders_in_2019'
+FROM users u
+LEFT JOIN Orders o
+ON o.buyer_id=u.user_id AND YEAR(order_date)='2019'
+GROUP BY u.user_id
+```
+
+```sql
+# Write your MySQL query statement below
+with count_2019 as (
+    select buyer_id, count(*) as orders_in_2019
+    from Orders
+    where year(order_date)=2019
+    group by buyer_id
+)
+
+select
+    u.user_id as buyer_id,
+    u.join_date,
+    coalesce(c.orders_in_2019, 0) as orders_in_2019
+from
+Users u
+left join
+count_2019 as c
+on u.user_id = c.buyer_id
+```
