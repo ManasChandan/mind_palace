@@ -64,3 +64,49 @@ left join
 count_2019 as c
 on u.user_id = c.buyer_id
 ```
+
+### https://leetcode.com/problems/product-price-at-a-given-date/
+
+```sql
+# Write your MySQL query statement below
+with distinct_prod as (
+    select distinct(product_id) as product_id
+    from Products
+), change_analysis as (
+    select
+        *, 
+        ROW_NUMBER() over (partition by product_id order by change_date desc) as rn
+    from 
+        Products
+    where
+        change_date <= "2019-08-16"
+)
+
+select dp.product_id, coalesce(ca.new_price, 10) as price from 
+distinct_prod dp
+left join
+(select * from change_analysis where rn=1) ca
+on dp.product_id = ca.product_id
+```
+
+### https://leetcode.com/problems/immediate-food-delivery-ii/
+
+```sql
+# Write your MySQL query statement below
+with order_rank as (
+    select 
+        *, 
+        ROW_NUMBER() over(partition by customer_id order by order_date asc) as rn
+    from
+        Delivery
+), first_immediate_orders as (
+    select * from 
+    order_rank
+    where rn=1 and order_date = customer_pref_delivery_date
+)
+
+select 
+    round((select count(distinct(customer_id)) from first_immediate_orders)*100 / 
+    (select count(distinct(customer_id)) from Delivery),2)
+as immediate_percentage;
+```
