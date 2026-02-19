@@ -110,3 +110,128 @@ select
     (select count(distinct(customer_id)) from Delivery),2)
 as immediate_percentage;
 ```
+
+### https://leetcode.com/problems/monthly-transactions-i/
+
+```sql
+with monthly_data as (
+    select
+        *, 
+        DATE_FORMAT(trans_date,'%Y-%m') as `month`
+    from 
+        Transactions
+)
+
+select 
+    `month`, 
+    country, 
+    count(*) as trans_count, 
+    sum(case when state = 'approved' then 1 else 0 end) as approved_count, 
+    sum(amount) as trans_total_amount, 
+    sum(case when state = 'approved' then amount else 0 end) as approved_total_amount
+from 
+    monthly_data
+group by 
+    `month`, country;
+```
+
+### https://leetcode.com/problems/last-person-to-fit-in-the-bus/
+
+```sql
+# Write your MySQL query statement below
+with cummulative_sum as (
+    select 
+        *, 
+        sum(weight) over (order by turn asc rows between UNBOUNDED PRECEDING AND CURRENT ROW) as cs
+    from
+        Queue
+), all_allowed_person as (
+    select * from cummulative_sum
+    where cs <= 1000
+)
+
+select person_name from all_allowed_person
+where cs = (select max(cs) from all_allowed_person)
+```
+
+```sql
+with cte1 as (
+    select person_name,
+        sum(weight)over(order by turn) as cum_weight
+    from Queue 
+
+)
+select person_name
+from cte1
+where cum_weight <= 1000
+order by cum_weight DESC
+limit 1 
+```
+
+### https://leetcode.com/problems/restaurant-growth/
+
+```sql
+with sv as (
+    select visited_on, sum(amount) as amt
+    from Customer
+    group by visited_on
+    order by visited_on asc
+), wf as (
+    select *, 
+        sum(amt) over (order by visited_on asc range between interval 6 day preceding and current row) as ca, 
+        avg(amt) over (order by visited_on asc range between interval 6 day preceding and current row) as ma,
+        rank() over(order by visited_on asc) as rk
+    from 
+        sv 
+)
+
+select visited_on, ca as amount, round(ma,2) as average_amount
+from wf where rk >= 7
+```
+
+### https://leetcode.com/problems/students-and-examinations/
+
+```sql
+# Write your MySQL query statement below
+SELECT 
+    st.student_id, 
+    st.student_name, 
+    sb.subject_name, 
+    COUNT(e.student_id) AS attended_exams
+FROM 
+    Students st
+CROSS JOIN 
+    Subjects sb
+LEFT JOIN 
+    Examinations e 
+    ON st.student_id = e.student_id 
+    AND sb.subject_name = e.subject_name
+GROUP BY 
+    st.student_id, 
+    st.student_name, 
+    sb.subject_name
+ORDER BY 
+    st.student_id, 
+    sb.subject_name;
+```
+
+### https://leetcode.com/problems/movie-rating/
+
+```sql
+# Write your MySQL query statement below
+with grouped_table as (
+    select u.name as name, m.title as title, mr.rating as rating, mr.created_at as created_at from 
+    MovieRating mr
+    left join
+    Users u
+    on mr.user_id = u.user_id
+    left join
+    Movies m
+    on
+    mr.movie_id = m.movie_id
+)
+
+(select name as results from grouped_table group by name order by count(*) desc, name asc limit 1)
+union all
+(select title as results from grouped_table where date_format(created_at, '%Y%m') = 202002 group by title order by avg(rating) desc, title asc limit 1)
+```
