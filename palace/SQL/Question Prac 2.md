@@ -124,7 +124,7 @@ with monthly_data as (
 
 select 
     `month`, 
-    country, 
+    country as country, 
     count(*) as trans_count, 
     sum(case when state = 'approved' then 1 else 0 end) as approved_count, 
     sum(amount) as trans_total_amount, 
