@@ -235,3 +235,81 @@ with grouped_table as (
 union all
 (select title as results from grouped_table where date_format(created_at, '%Y%m') = 202002 group by title order by avg(rating) desc, title asc limit 1)
 ```
+
+### https://leetcode.com/problems/capital-gainloss/
+
+```sql
+select stock_name,
+sum(case when operation='Sell' then price end) -
+sum(case when operation='Buy' then price end) as  capital_gain_loss 
+from stocks
+group by stock_name
+```
+
+### https://leetcode.com/problems/count-salary-categories/
+
+```sql
+# Write your MySQL query statement below
+with salary_categories as (
+    (select 'Low Salary' as category)
+    union all
+    (select 'Average Salary' as category)
+    union all
+    (select 'High Salary' as category)
+), catgory_account as (
+    select
+        *, 
+        case
+            when income < 20000 then 'Low Salary'
+            when income > 50000 then 'High Salary'
+            else 'Average Salary'
+        end as category
+    from Accounts
+)
+
+select sc.category, count(ca.account_id) as accounts_count
+from salary_categories sc
+left join
+catgory_account ca
+on
+sc.category = ca.category
+group by sc.category
+```
+
+```sql
+select 'Low Salary' as category, count(*) as accounts_count
+    from accounts
+    where income < 20000
+union all
+select 'Average Salary' as category, count(*) as accounts_count
+    from accounts
+    where income between 20000 and 50000
+union all
+select 'High Salary' as category, count(*) as accounts_count
+    from accounts
+    where income > 50000
+```
+
+### https://leetcode.com/problems/confirmation-rate/
+
+```sql
+with c_ratio as (
+    select 
+        user_id, 
+        avg(
+            case
+                when action = 'confirmed' then 1 else 0
+            end
+        ) as confirmation_rate
+    from
+        Confirmations
+    group by 
+        user_id
+)
+
+select s.user_id, coalesce(round(cr.confirmation_rate,2), 0) as confirmation_rate
+from Signups s
+left join 
+c_ratio as cr
+on s.user_id = cr.user_id
+```
