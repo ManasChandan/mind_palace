@@ -313,3 +313,24 @@ left join
 c_ratio as cr
 on s.user_id = cr.user_id
 ```
+
+### https://leetcode.com/problems/find-students-who-improved/
+
+**key learning : the default range for indow is unbounded preceding and current row**
+
+```sql
+with ranks as (
+    select 
+        *, 
+        first_value(score) over (partition by student_id, subject order by exam_date asc ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as first_score,
+        last_value(score) over (partition by student_id, subject order by exam_date asc ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) as last_score
+    from
+        Scores
+)
+
+select student_id, subject, min(first_score) as first_score, min(last_score) as latest_score from
+ranks
+where first_score < last_score
+group by 
+student_id, subject
+```
