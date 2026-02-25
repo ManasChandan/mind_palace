@@ -48,7 +48,7 @@ When you write data, the **Driver** (the manager) breaks the data into partition
 
 What is a driver program ? 
 
-In PySpark, the Driver Program is the "brain" or the central coordinator of your application. It is the process that runs your main() function and creates the SparkSession (or SparkContext).
+In PySpark, the Driver Program is the "brain" or the central coordinator of your application. It is the process that runs your main() function and creates the SparkSession or SparkContext.
 
 Core Responsibilities
 - The driver is responsible for the entire lifecycle of a Spark application:
