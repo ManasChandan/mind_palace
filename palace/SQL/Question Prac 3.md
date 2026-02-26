@@ -77,3 +77,27 @@ seasoned_info as (
 select season, category, total_quantity, total_revenue from 
 seasoned_info where rn=1
 ```
+
+### https://leetcode.com/problems/average-time-of-process-per-machine/
+
+```sql
+# Write your MySQL query statement below
+with time_taken as (
+    select 
+        machine_id, 
+        process_id, 
+        max(case when activity_type = 'end' then timestamp end) - max(case when activity_type = 'start' then timestamp end) as time_taken_process
+    from
+        Activity
+    group by 
+        machine_id, process_id
+)
+
+select
+    machine_id,
+    round(avg(time_taken_process),3) as processing_time 
+from 
+    time_taken
+group by 
+    machine_id
+```
