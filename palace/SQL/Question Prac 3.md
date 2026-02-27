@@ -101,3 +101,36 @@ from
 group by 
     machine_id
 ```
+
+### https://leetcode.com/problems/find-overbooked-employees/description/
+
+**YEARWEEK DATE FUNCTION**
+
+```sql
+with weekly_timings as (
+    select
+        employee_id, 
+        yearweek(meeting_date,1),
+        sum(duration_hours) as weekly_meeting_time
+    from
+        meetings
+    group by 
+        employee_id, yearweek(meeting_date,1)
+    having
+        weekly_meeting_time > 20
+)
+
+select
+    wt.employee_id, e.employee_name, e.department, 
+    count(*) as meeting_heavy_weeks
+from 
+weekly_timings wt
+join
+employees e
+on wt.employee_id = e.employee_id
+group by 
+wt.employee_id, e.employee_name, e.department
+having meeting_heavy_weeks >= 2
+order by meeting_heavy_weeks desc,  e.employee_name asc
+```
+
