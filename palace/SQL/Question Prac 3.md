@@ -155,3 +155,44 @@ and sum(case when order_rating is not null then 1 else 0 end)*1.0/count(*) >= 0.
 and average_rating >= 4.0
 order by average_rating desc, customer_id desc 
 ```
+
+### https://leetcode.com/problems/find-churn-risk-customers/
+
+```sql
+WITH ProcessedEvents AS (
+    SELECT 
+        user_id,
+        plan_name,
+        monthly_amount,
+        event_date,
+        event_type,
+        -- Calculate window functions here
+        LAST_VALUE(plan_name) OVER (
+            PARTITION BY user_id ORDER BY event_date ASC 
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        ) AS current_plan,
+        LAST_VALUE(monthly_amount) OVER (
+            PARTITION BY user_id ORDER BY event_date ASC 
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        ) AS current_monthly_amount,
+        LAST_VALUE(event_type) OVER (
+            PARTITION BY user_id ORDER BY event_date ASC 
+            ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        ) AS last_event_type
+    FROM subscription_events
+)
+SELECT 
+    user_id,
+    current_plan,
+    current_monthly_amount,
+    MAX(monthly_amount) AS max_historical_amount,
+    DATEDIFF(MAX(event_date), MIN(event_date)) AS days_as_subscriber
+FROM ProcessedEvents
+GROUP BY user_id, current_plan, current_monthly_amount, last_event_type
+HAVING 
+    last_event_type <> 'cancel' AND
+    SUM(CASE WHEN event_type = 'downgrade' THEN 1 ELSE 0 END) > 0 AND
+    DATEDIFF(MAX(event_date), MIN(event_date)) >= 60 AND
+    current_monthly_amount / MAX(monthly_amount) < 0.5
+ORDER BY days_as_subscriber DESC, user_id ASC;
+```
