@@ -190,7 +190,7 @@ SELECT
 FROM ProcessedEvents
 GROUP BY user_id, current_plan, current_monthly_amount, last_event_type
 HAVING 
-    last_event_type <> 'cancel' AND
+    last_event_type <> 'cancel' and
     SUM(CASE WHEN event_type = 'downgrade' THEN 1 ELSE 0 END) > 0 AND
     DATEDIFF(MAX(event_date), MIN(event_date)) >= 60 AND
     current_monthly_amount / MAX(monthly_amount) < 0.5
