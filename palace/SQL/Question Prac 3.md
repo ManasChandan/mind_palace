@@ -196,3 +196,49 @@ HAVING
     current_monthly_amount / MAX(monthly_amount) < 0.5
 ORDER BY days_as_subscriber DESC, user_id ASC;
 ```
+
+### https://leetcode.com/problems/analyze-organization-hierarchy/
+
+**RECURSIVE CTE WITH ID HASH LOOKUP**
+
+```sql
+WITH RECURSIVE Hierarchy AS (
+    -- Base Case: The CEO
+    SELECT 
+        employee_id, 
+        employee_name, 
+        manager_id, 
+        salary, 
+        1 AS level,
+        CONCAT('/', employee_id, '/') AS path
+    FROM Employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    SELECT 
+        e.employee_id, 
+        e.employee_name, 
+        e.manager_id, 
+        e.salary, 
+        h.level + 1,
+        CONCAT(h.path, e.employee_id, '/')
+    FROM Employees e
+    JOIN Hierarchy h ON e.manager_id = h.employee_id
+)
+SELECT 
+    h1.employee_id,
+    h1.employee_name,
+    h1.level,
+    (SELECT COUNT(*) - 1 
+     FROM Hierarchy h2 
+     WHERE h2.path LIKE CONCAT('%/', h1.employee_id, '/%')) AS team_size,
+    (SELECT SUM(h3.salary) 
+     FROM Hierarchy h3 
+     WHERE h3.path LIKE CONCAT('%/', h1.employee_id, '/%')) AS budget
+FROM Hierarchy h1
+ORDER BY 
+    h1.level ASC, 
+    budget DESC, 
+    h1.employee_name ASC;
+```
