@@ -242,3 +242,53 @@ ORDER BY
     budget DESC, 
     h1.employee_name ASC;
 ```
+
+### https://leetcode.com/problems/find-users-with-persistent-behavior-patterns/
+
+**CONTINUOUS DATE IDF**
+
+```sql
+# Write your MySQL query statement below
+with date_group as (
+    select 
+        *, 
+        row_number() over (partition by user_id, action order by action_date asc) as rn
+    from
+        activity
+)
+
+select
+    user_id, 
+    action,
+    count(*) as streak_length, 
+    min(action_date) as start_date, 
+    max(action_date) as end_date
+from 
+date_group
+group by user_id, action, 
+date_sub(action_date, interval rn day)
+having streak_length >= 5
+order by streak_length desc, user_id asc
+```
+
+### https://leetcode.com/problems/find-zombie-sessions/
+
+**TIMESTAMP DIFF FOR TIME RELATED DUFFERENCES**
+
+```sql
+# Write your MySQL query statement below
+select
+    session_id, user_id,
+    timestampdiff(minute, min(event_timestamp), max(event_timestamp)) as session_duration_minutes,
+    sum(case when event_type='scroll' then 1 else 0 end) as scroll_count
+from
+app_events
+group by
+user_id, session_id
+having
+session_duration_minutes > 30 and
+scroll_count >= 5 and
+(sum(case when event_type='click' then 1 else 0 end)*1.0/scroll_count) < 0.20 and
+sum(case when event_type='purchase' then 1 else 0 end) = 0
+order by scroll_count desc, session_id asc
+```
