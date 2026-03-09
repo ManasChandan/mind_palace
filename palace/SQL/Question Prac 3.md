@@ -292,3 +292,14 @@ scroll_count >= 5 and
 sum(case when event_type='purchase' then 1 else 0 end) = 0
 order by scroll_count desc, session_id asc
 ```
+
+### https://leetcode.com/problems/group-sold-products-by-the-date/
+
+**GROUP BY AND MAKE LIST OF PRODUCTS**
+
+```sql
+select sell_date, count(distinct(product)) as num_sold,
+group_concat(distinct(product) order by product SEPARATOR ',') as products
+from activities group by sell_date
+order by sell_date asc
+```
