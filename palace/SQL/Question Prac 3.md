@@ -158,6 +158,8 @@ order by average_rating desc, customer_id desc
 
 ### https://leetcode.com/problems/find-churn-risk-customers/
 
+**WINDOW OR ANALYTICAL FUNCTIONS CAN'T BE USED WITH GROUPBY AND HAVING DIRECTLY**
+
 ```sql
 WITH ProcessedEvents AS (
     SELECT 
