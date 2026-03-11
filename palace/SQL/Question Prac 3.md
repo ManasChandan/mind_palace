@@ -305,3 +305,86 @@ group_concat(distinct(product) order by product SEPARATOR ',') as products
 from activities group by sell_date
 order by sell_date asc
 ```
+
+### https://leetcode.com/problems/employees-with-missing-information/
+
+**FULL OUTER JOIN HANDLING IF SOMETHING IS PRESENT HERE AND THERE**
+
+```sql
+select
+    coalesce(e.employee_id, s.employee_id) as employee_id
+from 
+employees e
+full outer join salaries s
+on e.employee_id = s.employee_id
+where e.name is null or s.salary is null
+```
+
+### https://leetcode.com/problems/primary-department-for-each-employee/
+
+**DSA LEVEL SOLUTION**
+
+```sql
+select
+    employee_id,
+    coalesce(min(case when primary_flag='Y' then department_id else null end), min(department_id)) as department_id
+from
+employee
+group by employee_id
+```
+
+### https://leetcode.com/problems/find-users-with-high-token-usage/
+
+**THE FIRST PRMPT WONT WORK AS SUM AND AVG WERE NESTING EACH OTHER**
+
+```sql
+# Write your MySQL query statement below
+-- select 
+--     user_id, 
+--     count(*) as prompt_count, 
+--     round(avg(tokens),2) as avg_tokens
+-- from
+--     prompts
+-- group by user_id
+-- having prompt_count >= 3 and
+-- sum(case when tokens>avg_tokens then 1 else 0 end)>0
+-- order by avg_tokens desc, user_id asc
+
+select 
+    user_id, 
+    count(*) as prompt_count, 
+    round(avg(tokens),2) as avg_tokens
+from
+    prompts
+group by user_id
+having prompt_count >= 3 and
+max(tokens) > avg_tokens
+order by avg_tokens desc, user_id asc
+```
+
+### https://leetcode.com/problems/find-category-recommendation-pairs/
+
+**<> SYMBOLS WORK WELL FOR LEXOGRAPHICAL OPERATIONS AND PRODUCT FACT AND DIM SHOULD BE JOIN FIRST TO AVOID ONE EXTRA JOIN**
+
+```sql
+WITH user_categories AS (
+    SELECT DISTINCT 
+        pp.user_id, 
+        pi.category
+    FROM productpurchases pp
+    JOIN productinfo pi 
+      ON pp.product_id = pi.product_id
+)
+
+SELECT
+    a.category AS category1,
+    b.category AS category2,
+    COUNT(DISTINCT a.user_id) AS customer_count
+FROM user_categories a
+JOIN user_categories b
+  ON a.user_id = b.user_id
+ AND a.category < b.category
+GROUP BY a.category, b.category
+HAVING COUNT(DISTINCT a.user_id) >= 3
+ORDER BY customer_count DESC, category1 ASC, category2 ASC;
+```
