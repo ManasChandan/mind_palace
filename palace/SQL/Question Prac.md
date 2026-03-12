@@ -124,7 +124,6 @@ where e.salary > m.salary
 ### https://leetcode.com/problems/duplicate-emails/
 
 ```sql
--- Write your PostgreSQL query statement below
 SELECT 
     email
 FROM 
