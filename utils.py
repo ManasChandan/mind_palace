@@ -81,6 +81,7 @@ def display_directory_contents(path):
     """Helper function for recursive display."""
 
     for root, dir, files in os.walk(path):
+        files.sort()
         if os.path.basename(root) != path:
             folder_name = re.split(path, root)[-1].lstrip(os.sep)
             st.sidebar.markdown(f"📂 {folder_name.replace(os.sep, r' > ')}")
