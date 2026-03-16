@@ -18,3 +18,4 @@ let us cosnider we have a number 8, for to get the sum via a deci number you nee
 if you wnat to fine the min number to be deducted or added to make it divisible it would go via the remainder only
 sum(nums) % k
 
+the trick for min operation is as follows - min(ele%3, 3-(ele%3))
