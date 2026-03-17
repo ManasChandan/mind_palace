@@ -19,3 +19,8 @@ if you wnat to fine the min number to be deducted or added to make it divisible 
 sum(nums) % k
 
 the trick for min operation is as follows - min(ele%3, 3-(ele%3))
+
+### The solution to get n number of combinations
+
+How many 2 element array can be made can be answere by nc2, which is nothing but n(n-1)//2
+
