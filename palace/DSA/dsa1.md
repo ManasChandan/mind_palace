@@ -23,3 +23,7 @@ the trick for min operation is as follows - min(ele%3, 3-(ele%3))
 ### The solution to get n number of combinations
 
 How many 2 element array can be made can be answere by nc2, which is nothing but n(n-1)//2.
+
+### The index of the alphabtes like a=1 or a=26
+
+for a=1, use ord(ele) - 96, for a=26 123-ord(ele)
