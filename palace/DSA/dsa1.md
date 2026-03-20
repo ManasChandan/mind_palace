@@ -27,3 +27,8 @@ How many 2 element array can be made can be answere by nc2, which is nothing but
 ### The index of the alphabtes like a=1 or a=26
 
 for a=1, use ord(ele) - 96, for a=26 123-ord(ele)
+
+### The setting of the matrix for cols to 0s where (i,j) is 0
+
+Store the row and col arr. Make their indexes as 0 wherever applicable.
+Re-iterate the array and maek if col[i] is 0 or row[j] is 0
