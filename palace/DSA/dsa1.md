@@ -52,3 +52,8 @@ The Logic XOR the two numbers: The XOR operation ($start \oplus goal$) compares 
 - If start = 10 (1010) and goal = 7 (0111).$1010 \oplus 0111 = 1101$Count the 1s: The resulting number has a 1 at every position where a flip is necessary. 
 - Therefore, the total count of set bits (1s) in the XOR result is answer.
 - There is no sighn change if we change the directionality. 
+
+### The Two-Pass OptimizationRow 
+
+- Maxima: Create a temporary matrix where each element at (i, j) is the maximum of grid[i][j], grid[i][j+1], and grid[i][j+2]. This reduces the width from $n$ to $n-2$.Column 
+- Maxima: Take that temporary matrix and, for each column, find the maximum of three consecutive vertical cells.
