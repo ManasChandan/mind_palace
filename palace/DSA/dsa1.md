@@ -57,3 +57,7 @@ The Logic XOR the two numbers: The XOR operation ($start \oplus goal$) compares 
 
 - Maxima: Create a temporary matrix where each element at (i, j) is the maximum of grid[i][j], grid[i][j+1], and grid[i][j+2]. This reduces the width from $n$ to $n-2$.Column 
 - Maxima: Take that temporary matrix and, for each column, find the maximum of three consecutive vertical cells.
+
+### Min Operations between 2 arrays
+
+- sorting and continuos difference of elements.
