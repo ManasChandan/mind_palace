@@ -388,3 +388,5 @@ GROUP BY a.category, b.category
 HAVING COUNT(DISTINCT a.user_id) >= 3
 ORDER BY customer_count DESC, category1 ASC, category2 ASC;
 ```
+
+### Concat for formatting
