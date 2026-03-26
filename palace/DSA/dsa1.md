@@ -61,3 +61,26 @@ The Logic XOR the two numbers: The XOR operation ($start \oplus goal$) compares 
 ### Min Operations between 2 arrays
 
 - sorting and continuos difference of elements.
+
+### https://leetcode.com/problems/minimum-number-of-operations-to-move-all-balls-to-each-box
+
+```python
+n = len(boxes)
+answer = [0]*n
+
+ball_cnt = 0
+movements = 0
+for i in range(n):
+        answer[i] += movements
+        ball_cnt += int(boxes[i])
+        movements += ball_cnt
+
+ball_cnt = 0
+movements = 0
+for i in range(n-1, -1, -1):
+        answer[i] += movements
+        ball_cnt += int(boxes[i])
+        movements += ball_cnt
+
+return answer
+```
