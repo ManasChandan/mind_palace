@@ -84,3 +84,29 @@ for i in range(n-1, -1, -1):
 
 return answer
 ```
+
+### https://leetcode.com/problems/find-the-number-of-good-pairs-i/description/
+
+complexity NlogN
+
+```python
+from collections import Counter
+
+        c1 = Counter(nums1)
+
+        c2 = Counter([i*k for i in nums2])
+
+        pairs = 0
+
+        max_num1 = max(nums1)
+
+        for divisior, freq in c2.items():
+
+            for d in range(divisior, max_num1+1, divisior):
+
+                if d in c1:
+
+                    pairs += freq * c1[d]
+        
+        return pairs
+```
