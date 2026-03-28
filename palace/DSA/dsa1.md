@@ -110,3 +110,12 @@ from collections import Counter
         
         return pairs
 ```
+### https://leetcode.com/problems/number-of-steps-to-reduce-a-number-to-zero/submissions/1961147361/
+
+BIT MANIPULATION
+
+```python
+if num == 0: return 0
+        binary_str = bin(num)[2:]
+        return (len(binary_str) - 1) + binary_str.count('1')
+```
