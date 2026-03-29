@@ -112,7 +112,7 @@ from collections import Counter
 ```
 ### https://leetcode.com/problems/number-of-steps-to-reduce-a-number-to-zero/submissions/1961147361/
 
-BIT MANIPULATION
+BIT MANIPULATION + 1
 
 ```python
 if num == 0: return 0
