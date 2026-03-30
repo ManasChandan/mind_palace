@@ -3,6 +3,8 @@
 ### 🚀 Task List
 
 - [ ] Relate a bit to geo-spatial data. 
+- [ ] Add ram and CPU usgae.
+
 
 ### 🚀 Completed List
 
