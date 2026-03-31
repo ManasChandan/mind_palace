@@ -31,4 +31,4 @@ if st.session_state.current_file:
     u.render_markdown_file()
 else:
     st.title("Welcome to Manas Mind Palace")
-    st.info("Select a Room")
+    st.info("Select a Room of your choice")
