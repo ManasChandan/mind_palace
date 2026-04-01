@@ -119,3 +119,7 @@ if num == 0: return 0
         binary_str = bin(num)[2:]
         return (len(binary_str) - 1) + binary_str.count('1')
 ```
+
+### Chebbyshave distance
+
+max(abs_diffs), when diagonal move 1 dist and vertical and horizontal one
