@@ -123,3 +123,19 @@ if num == 0: return 0
 ### Chebbyshave distance
 
 max(abs_diffs), when diagonal move 1 dist and vertical and horizontal one
+
+### If an element arr[i] how many times it appears in the sub-array
+
+The Calculation Rule
+- If an element is part of $T$ total subarrays:
+  - Odd-length subarrays: $\text{ceil}(T / 2)$
+  - Even-length subarrays: $\text{floor}(T / 2)$
+
+In Python integer math, // is the floor operator. 
+
+So:Total Subarrays ($T$): (i + 1) * (n - i)
+
+- Even-length subarrays: T // 2
+- Odd-length subarrays: (T + 1) // 2
+
+### lookback or update back things need stack data
