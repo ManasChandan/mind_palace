@@ -139,3 +139,40 @@ So:Total Subarrays ($T$): (i + 1) * (n - i)
 - Odd-length subarrays: (T + 1) // 2
 
 ### lookback or update back things need stack data
+
+### Dutch Flag algorithm 
+
+- low mid and high
+- The low and mid lie at zero and high at last
+- if mid is o, replace with low and increment, and increment both
+- if mid is 1, fine, increment mid
+- if mid is 2, replace high with mid and bring the high back
+- finally, all good. 
+
+### Inerval Overlaps
+
+```python
+def is_overlap(first, second):
+            return first[1] >= second[0] >= first[0]
+        
+def create_overlaps(first, second):
+        return [min(first[0],second[0]), max(first[1], second[1])]
+
+answer = []
+
+sorted_intervals = sorted(intervals, key=lambda x: x[0])
+
+overlapped = sorted_intervals[0]
+
+for i in range(1, len(sorted_intervals)):
+
+        if is_overlap(overlapped, sorted_intervals[i]):
+        overlapped = create_overlaps(overlapped, sorted_intervals[i])
+        else:
+        answer.append(overlapped)
+        overlapped = sorted_intervals[i]
+
+answer.append(overlapped)
+
+return answer
+```
