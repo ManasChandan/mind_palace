@@ -84,4 +84,4 @@ The `XOR` (`^`) operator is unique because it is its own inverse.
 ---
 
 > **Pro Tip:** When using these in Python or C++, remember that **operator precedence** can be tricky. Bitwise operators usually have lower precedence than addition or subtraction. **Always use parentheses** to be safe: 
-> `(n & (1 << i))` instead of `n & 1 << i`.
+> `(n & (1 << i))` instead of `n & 1 << i`
