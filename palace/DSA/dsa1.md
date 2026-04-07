@@ -201,3 +201,7 @@ while j >= 0:
 ### Min elements to remove form sides
 
 Check the best possible limit in middle. 
+
+### To check of x,y within a circle
+
+((x-xr) ** 2 + (y-yr) ** 2) ** (1/2)
