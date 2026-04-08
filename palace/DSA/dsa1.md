@@ -205,3 +205,17 @@ Check the best possible limit in middle.
 ### To check of x,y within a circle
 
 ((x-xr) ** 2 + (y-yr) ** 2) ** (1/2)
+
+### How to move non wnted elements to last
+
+```python
+left = 0
+for ele in nums:
+        if ele != 0:
+        nums[left] = ele
+        left += 1
+
+while left < len(nums):
+        nums[left] = 0
+        left += 1
+```
