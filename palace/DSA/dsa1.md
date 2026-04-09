@@ -219,3 +219,9 @@ while left < len(nums):
         nums[left] = 0
         left += 1
 ```
+
+### In binary search if you want to find possible index its aloways low
+
+if exact match then mid, if possible position its low. 
+
+### Either or is XOR, for the entire list of nums. 
