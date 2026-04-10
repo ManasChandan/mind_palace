@@ -85,3 +85,25 @@ The `XOR` (`^`) operator is unique because it is its own inverse.
 
 > **Pro Tip:** When using these in Python or C++, remember that **operator precedence** can be tricky. Bitwise operators usually have lower precedence than addition or subtraction. **Always use parentheses** to be safe: 
 > `(n & (1 << i))` instead of `n & 1 << i`
+
+## Live example - 1 [_is_prime_set]
+
+This code creates a lookup table (_is_prime_set) to instantly check if the number of set bits (1s) in any integer up to 1,000,000 is a prime number.
+
+### How it works
+
+   1. The Mask (665772): This is a bitmask where the 1s are placed at the positions of prime numbers. In binary, 665772 is 1010001010001010101100.
+   * If you count from the right (starting at 0), the bits at positions 2, 3, 5, 7, 11, 13, 17, and 19 are set to 1. These are all the prime numbers possible for a 20-bit integer (since $2^{20} > 1,000,000$).
+   2. The Loop: It iterates through every number $i$ from 0 to 1,000,000.
+   3. i.bit_count(): This counts how many 1s are in the binary form of the current number $i$.
+   4. The Check (_mask >> i.bit_count() & 1): It shifts the mask right by the number of set bits. If the bit at that position is 1, it means the count is a prime number.
+   5. The Storage: If the count is prime, it marks _is_prime_set[i] as 1.
+
+### Example: Checking the number 7
+Let's see what happens when the loop reaches i = 7:
+
+* Binary of 7: 111
+* i.bit_count(): There are 3 set bits.
+* Shift the Mask: The code shifts the mask 665772 right by 3 spots.
+* Result: Since the 3rd bit of the mask is 1 (because 3 is prime), the condition is true.
+* Final Action: _is_prime_set[7] is set to 1. [1] 
