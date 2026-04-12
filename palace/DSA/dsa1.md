@@ -37,13 +37,13 @@ Re-iterate the array and maek if col[i] is 0 or row[j] is 0
 
 ```python
 max_sum = float('-inf')
-        cont_sum = 0
-        for ele in nums:
-            cont_sum += ele
-            max_sum = max(max_sum, cont_sum)
-            if cont_sum < 0:
+cont_sum = 0
+for ele in nums:
+        cont_sum += ele
+        max_sum = max(max_sum, cont_sum)
+        if cont_sum < 0:
                 cont_sum = 0
-        return max_sum
+return max_sum
 ```
 
 ### Min Bits !
