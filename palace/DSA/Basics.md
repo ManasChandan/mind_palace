@@ -13,7 +13,6 @@ return root
 ```
 
 ### Reverse LL
-
 ```python
 if head is None:
     return None
@@ -28,4 +27,3 @@ while curr:
     curr = next_n
 return prev
 ```
-
